@@ -140,7 +140,7 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
                     e.preventDefault();
                     resetUpload();
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-800 underline focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
+                  className="text-sm text-gray-600 hover:text-gray-800 underline focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg px-4 py-2 min-h-[44px] active:scale-95 transition-transform"
                 >
                   다른 이미지 선택
                 </button>

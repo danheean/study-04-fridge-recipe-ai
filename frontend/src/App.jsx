@@ -87,10 +87,10 @@ function Home() {
               <h1 className="text-2xl font-bold text-gray-900">FridgeChef</h1>
             </Link>
             <nav aria-label="주요 네비게이션">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1"
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg px-3 py-2.5 min-h-[44px] active:bg-gray-100 active:scale-95"
                 >
                   <UserIcon className="w-5 h-5" aria-hidden="true" />
                   프로필
@@ -98,7 +98,7 @@ function Home() {
                 {ingredients.length > 0 && (
                   <button
                     onClick={handleReset}
-                    className="text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1"
+                    className="text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg px-3 py-2.5 min-h-[44px] active:bg-gray-100 active:scale-95 transition-transform"
                     aria-label="재료 목록 초기화하고 새로 시작하기"
                   >
                     새로 시작하기

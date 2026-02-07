@@ -115,7 +115,7 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
           <h2 id="login-modal-title" className="text-2xl font-bold text-gray-900">로그인</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-90"
             aria-label="로그인 모달 닫기"
           >
             <X className="w-5 h-5" aria-hidden="true" />
@@ -159,7 +159,7 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] active:scale-[0.98]"
               aria-busy={loading}
             >
               {loading ? (
@@ -187,7 +187,7 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="w-full bg-white text-primary-500 border-2 border-primary-500 py-3 rounded-lg font-medium hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-white text-primary-500 border-2 border-primary-500 py-3 rounded-lg font-medium hover:bg-primary-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] active:scale-[0.98]"
           >
             새 계정 만들기
           </button>

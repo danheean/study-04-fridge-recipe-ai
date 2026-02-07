@@ -172,10 +172,10 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
               <button
                 onClick={() => handleSaveRecipe(recipe, index)}
                 disabled={savedRecipeIds.has(`${recipe.title}-${index}`) || savingIds.has(`${recipe.title}-${index}`)}
-                className={`w-full mt-4 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                className={`w-full mt-4 font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] ${
                   savedRecipeIds.has(`${recipe.title}-${index}`)
                     ? 'bg-emerald-500 text-white cursor-not-allowed'
-                    : 'bg-primary-500 hover:bg-primary-600 text-white'
+                    : 'bg-primary-500 hover:bg-primary-600 text-white active:scale-[0.98]'
                 }`}
                 aria-busy={savingIds.has(`${recipe.title}-${index}`)}
                 aria-label={

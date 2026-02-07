@@ -89,7 +89,7 @@ export default function RecipeDetailModal({ recipe, onClose }) {
             <button
               ref={closeButtonRef}
               onClick={onClose}
-              className="ml-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="ml-4 p-2 hover:bg-white/20 rounded-lg transition-all min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-90"
               aria-label="레시피 상세 정보 닫기"
             >
               <X className="w-6 h-6" aria-hidden="true" />
@@ -200,7 +200,7 @@ export default function RecipeDetailModal({ recipe, onClose }) {
         <footer className="sticky bottom-0 bg-gray-50 p-4 rounded-b-2xl border-t border-gray-200">
           <button
             onClick={onClose}
-            className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] active:scale-[0.98]"
           >
             닫기
           </button>

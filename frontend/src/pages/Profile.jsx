@@ -270,10 +270,10 @@ function Profile() {
                 aria-controls="recipes-panel"
                 id="recipes-tab"
                 onClick={() => setActiveTab('recipes')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
+                className={`flex-1 py-4 px-6 text-center font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset min-h-[56px] ${
                   activeTab === 'recipes'
                     ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100'
                 }`}
               >
                 <BookMarked className="w-5 h-5 inline-block mr-2" aria-hidden="true" />
@@ -285,10 +285,10 @@ function Profile() {
                 aria-controls="preferences-panel"
                 id="preferences-tab"
                 onClick={() => setActiveTab('preferences')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
+                className={`flex-1 py-4 px-6 text-center font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset min-h-[56px] ${
                   activeTab === 'preferences'
                     ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100'
                 }`}
               >
                 <Settings className="w-5 h-5 inline-block mr-2" aria-hidden="true" />
@@ -341,7 +341,7 @@ function Profile() {
                                   e.stopPropagation();
                                   handleDeleteRecipe(recipe.id);
                                 }}
-                                className="text-red-500 hover:text-red-700 transition-colors ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                                className="text-red-500 hover:text-red-700 transition-all ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg p-2 min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-90"
                                 aria-label={`${recipe.title} 레시피 삭제`}
                               >
                                 <Trash2 className="w-5 h-5" aria-hidden="true" />
@@ -393,7 +393,7 @@ function Profile() {
                         <button
                           onClick={loadMoreRecipes}
                           disabled={loadingMore}
-                          className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                          className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] active:scale-[0.98]"
                           aria-busy={loadingMore}
                         >
                           {loadingMore ? (
@@ -527,7 +527,7 @@ function Profile() {
                   {/* 저장 버튼 */}
                   <button
                     type="submit"
-                    className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] active:scale-[0.98]"
                   >
                     선호도 저장
                   </button>

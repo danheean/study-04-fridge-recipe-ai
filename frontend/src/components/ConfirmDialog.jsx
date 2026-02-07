@@ -92,7 +92,7 @@ export default function ConfirmDialog() {
           </h2>
           <button
             onClick={state.onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-all p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-90"
             aria-label="다이얼로그 닫기"
           >
             <X className="w-6 h-6" />
@@ -112,7 +112,7 @@ export default function ConfirmDialog() {
           <button
             ref={cancelButtonRef}
             onClick={state.onCancel}
-            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+            className="px-4 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-gray-300 min-h-[48px] active:scale-95"
             aria-label={state.cancelLabel}
           >
             {state.cancelLabel}
@@ -120,7 +120,7 @@ export default function ConfirmDialog() {
           <button
             ref={confirmButtonRef}
             onClick={state.onConfirm}
-            className={`px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${confirmButtonClass}`}
+            className={`px-4 py-3 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 min-h-[48px] active:scale-95 ${confirmButtonClass}`}
             aria-label={state.confirmLabel}
           >
             {state.confirmLabel}
