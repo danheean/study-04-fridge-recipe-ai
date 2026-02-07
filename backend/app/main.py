@@ -59,8 +59,7 @@ async def health_check():
     }
 
 
-# API 라우터 등록 (추후 추가)
-# from app.api import images, recipes, users
-# app.include_router(images.router)
-# app.include_router(recipes.router)
-# app.include_router(users.router)
+# API 라우터 등록
+from app.api import images
+
+app.include_router(images.router)

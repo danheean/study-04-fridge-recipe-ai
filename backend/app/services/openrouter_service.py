@@ -81,8 +81,14 @@ class OpenRouterService:
             result = response.json()
             content = result["choices"][0]["message"]["content"]
 
+            # 디버깅: 응답 로깅
+            print(f"[DEBUG] OpenRouter 응답: {content[:500]}")
+
             # JSON 파싱
-            return self._parse_json_response(content)
+            parsed = self._parse_json_response(content)
+            print(f"[DEBUG] 파싱된 결과: {parsed}")
+
+            return parsed
 
         except requests.exceptions.RequestException as e:
             raise Exception(f"OpenRouter API 오류: {str(e)}")
