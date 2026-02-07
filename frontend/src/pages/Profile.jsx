@@ -4,6 +4,7 @@ import { getSavedRecipes, deleteSavedRecipe, getUserStats, updatePreferences, ge
 import { getDifficultyColor, DEFAULT_USER_ID } from '../utils/constants';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirm } from '../contexts/ConfirmContext';
 import RecipeDetailModal from '../components/RecipeDetailModal';
 import { SkeletonStatsCard, SkeletonGrid, SkeletonProfileCard } from '../components/Skeleton';
 import { CenteredSpinner } from '../components/LoadingSpinner';
@@ -11,6 +12,7 @@ import { CenteredSpinner } from '../components/LoadingSpinner';
 function Profile() {
   const toast = useToast();
   const { user } = useAuth();
+  const confirm = useConfirm();
   const userId = user?.id || DEFAULT_USER_ID;
   const [activeTab, setActiveTab] = useState('recipes');
   const [savedRecipes, setSavedRecipes] = useState([]);
@@ -87,11 +89,20 @@ function Profile() {
 
   // 레시피 삭제
   const handleDeleteRecipe = async (recipeId) => {
-    if (!confirm('정말로 이 레시피를 삭제하시겠습니까?')) return;
+    const confirmed = await confirm({
+      title: '레시피 삭제',
+      message: '정말로 이 레시피를 삭제하시겠습니까?\n삭제된 레시피는 복구할 수 없습니다.',
+      confirmLabel: '삭제',
+      cancelLabel: '취소',
+      confirmVariant: 'danger',
+    });
+
+    if (!confirmed) return;
 
     try {
       await deleteSavedRecipe(userId, recipeId);
       setSavedRecipes(savedRecipes.filter((r) => r.id !== recipeId));
+      setTotalRecipes((prev) => prev - 1);
       toast.success('레시피가 삭제되었습니다.');
     } catch (error) {
       console.error('Failed to delete recipe:', error);

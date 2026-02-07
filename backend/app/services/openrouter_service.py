@@ -3,6 +3,7 @@ OpenRouter API 서비스
 """
 import httpx
 import json
+import logging
 from typing import List, Dict, Optional
 from tenacity import (
     retry,

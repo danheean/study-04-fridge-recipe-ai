@@ -5,6 +5,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoadingProvider, useLoading } from './contexts/LoadingContext';
+import { ConfirmProvider } from './contexts/ConfirmContext';
+import ConfirmDialog from './components/ConfirmDialog';
 import ImageUpload from './components/ImageUpload';
 import IngredientList from './components/IngredientList';
 import RecipeList from './components/RecipeList';
@@ -213,13 +215,16 @@ function App() {
       <LoadingProvider>
         <AuthProvider>
           <ToastProvider>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/register" element={<RegisterPage />} />
-              </Routes>
-            </Router>
+            <ConfirmProvider>
+              <Router>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                </Routes>
+              </Router>
+              <ConfirmDialog />
+            </ConfirmProvider>
           </ToastProvider>
         </AuthProvider>
       </LoadingProvider>

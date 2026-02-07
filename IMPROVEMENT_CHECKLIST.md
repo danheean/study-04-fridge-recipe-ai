@@ -214,13 +214,17 @@ touch frontend/src/components/ErrorBoundary.jsx
 
 ## 🟢 LOW PRIORITY - 선택적
 
-### 16. 확인 다이얼로그 커스텀 (2시간)
-- [ ] ConfirmDialog.jsx 생성
-- [ ] confirm() 대체
+### 16. 확인 다이얼로그 커스텀 ✅ (2시간)
+- [x] ConfirmDialog.jsx 생성
+- [x] ConfirmContext 및 useConfirm hook
+- [x] confirm() 대체 (Profile.jsx)
+- [x] 접근성: role="alertdialog", ESC 키, 포커스 트랩
+- [x] danger/primary variant 지원
 
 **우선순위**: 🟢 낮음
 **영향도**: UX 미세 개선
 **난이도**: 쉬움
+**완료일**: 2026-02-08
 
 ### 17. 모바일 터치 최적화 (2시간)
 - [ ] 버튼 크기 44px 이상
@@ -276,11 +280,11 @@ touch frontend/src/components/ErrorBoundary.jsx
 
 ## 📊 진행 상황 트래킹
 
-**완료**: 21 / 27 (78%)
+**완료**: 22 / 27 (81%)
 **진행 중**: 0 / 27
-**대기 중**: 6 / 27
+**대기 중**: 5 / 27
 
-**완료된 항목**: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10(부분), 11, 12, 13, 14, 15, 21, 22, 23, 24, 25, 26
+**완료된 항목**: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10(부분), 11, 12, 13, 14, 15, 16, 21, 22, 23, 24, 25, 26
 **백로그**: 27 (관리 기능)
 
 **목표 일정**:
