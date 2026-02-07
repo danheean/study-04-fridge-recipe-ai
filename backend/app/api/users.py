@@ -11,8 +11,10 @@ from app.models.user import User
 from app.models.recipe import SavedRecipe
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPreferences
 from app.schemas.recipe import RecipeCreate, SavedRecipeResponse
+from app.utils.logger import get_logger
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+logger = get_logger(__name__)
 
 
 @router.post("/", response_model=UserResponse)
@@ -140,24 +142,66 @@ async def save_recipe(
     return saved_recipe
 
 
-@router.get("/{user_id}/recipes", response_model=List[SavedRecipeResponse])
-async def get_saved_recipes(user_id: str, db: AsyncSession = Depends(get_db)):
-    """저장된 레시피 목록 조회"""
+@router.get("/{user_id}/recipes")
+async def get_saved_recipes(
+    user_id: str,
+    skip: int = 0,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    저장된 레시피 목록 조회 (페이지네이션 지원)
+
+    Args:
+        user_id: 사용자 ID
+        skip: 건너뛸 개수 (기본값: 0)
+        limit: 가져올 개수 (기본값: 10, 최대: 100)
+
+    Returns:
+        recipes: 레시피 목록
+        total: 전체 레시피 개수
+        skip: 건너뛴 개수
+        limit: 가져온 개수
+    """
+    logger.info(f"레시피 목록 조회 - 사용자: {user_id}, skip: {skip}, limit: {limit}")
+
     # 사용자 존재 확인
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
+        logger.warning(f"사용자를 찾을 수 없음 - ID: {user_id}")
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    # 레시피 조회 (최신순)
+    # limit 최대값 제한
+    limit = min(limit, 100)
+
+    # 전체 개수 조회
+    count_result = await db.execute(
+        select(func.count())
+        .select_from(SavedRecipe)
+        .filter(SavedRecipe.user_id == user_id)
+    )
+    total = count_result.scalar()
+
+    # 레시피 조회 (최신순, 페이지네이션)
     result = await db.execute(
         select(SavedRecipe)
         .filter(SavedRecipe.user_id == user_id)
         .order_by(SavedRecipe.created_at.desc())
+        .offset(skip)
+        .limit(limit)
     )
     recipes = result.scalars().all()
 
-    return recipes
+    logger.info(f"레시피 목록 조회 완료 - 총 {total}개 중 {len(recipes)}개 반환")
+
+    return {
+        "recipes": [recipe.to_dict() for recipe in recipes],
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "has_more": (skip + limit) < total
+    }
 
 
 @router.get("/{user_id}/recipes/{recipe_id}", response_model=SavedRecipeResponse)

@@ -1,10 +1,21 @@
 """
 OpenRouter API 서비스
 """
-import requests
+import httpx
 import json
 from typing import List, Dict, Optional
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    before_sleep_log
+)
 from app.config import settings
+from app.utils.logger import get_logger
+
+# 로거 설정
+logger = get_logger(__name__)
 
 
 class OpenRouterService:
@@ -16,12 +27,66 @@ class OpenRouterService:
         self.image_model = settings.IMAGE_MODEL
         self.text_model = settings.TEXT_MODEL
 
+        # httpx 클라이언트 설정
+        self.timeout = httpx.Timeout(60.0, connect=10.0)
+        self.limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
+
     def _create_headers(self) -> Dict[str, str]:
         """API 요청 헤더 생성"""
         return {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError)),
+        before_sleep=before_sleep_log(logger, logging.WARNING)
+    )
+    async def _make_api_request(
+        self,
+        data: Dict,
+        timeout: Optional[float] = None
+    ) -> Dict:
+        """
+        OpenRouter API에 요청 보내기 (재시도 로직 포함)
+
+        Args:
+            data: 요청 데이터
+            timeout: 타임아웃 (초)
+
+        Returns:
+            API 응답
+        """
+        headers = self._create_headers()
+        request_timeout = timeout or 60.0
+
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(request_timeout, connect=10.0),
+            limits=self.limits
+        ) as client:
+            try:
+                response = await client.post(
+                    self.api_url,
+                    headers=headers,
+                    json=data
+                )
+                response.raise_for_status()
+                return response.json()
+
+            except httpx.HTTPStatusError as e:
+                logger.error(f"HTTP 오류: {e.response.status_code} - {e.response.text}")
+                raise Exception(f"OpenRouter API HTTP 오류: {e.response.status_code}")
+            except httpx.TimeoutException:
+                logger.error("OpenRouter API 타임아웃")
+                raise
+            except httpx.NetworkError as e:
+                logger.error(f"네트워크 오류: {str(e)}")
+                raise
+            except Exception as e:
+                logger.error(f"API 요청 중 예상치 못한 오류: {str(e)}")
+                raise Exception(f"OpenRouter API 오류: {str(e)}")
 
     async def analyze_image(self, image_base64: str) -> Dict:
         """
@@ -119,23 +184,21 @@ class OpenRouterService:
         }
 
         try:
-            response = requests.post(self.api_url, headers=headers, json=data, timeout=30)
-            response.raise_for_status()
-
-            result = response.json()
+            result = await self._make_api_request(data, timeout=30.0)
             content = result["choices"][0]["message"]["content"]
 
             # 디버깅: 응답 로깅
-            print(f"[DEBUG] OpenRouter 응답: {content[:500]}")
+            logger.info(f"OpenRouter 이미지 분석 응답 (첫 500자): {content[:500]}")
 
             # JSON 파싱
             parsed = self._parse_json_response(content)
-            print(f"[DEBUG] 파싱된 결과: {parsed}")
+            logger.info(f"파싱된 재료 개수: {len(parsed.get('ingredients', []))}")
 
             return parsed
 
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"OpenRouter API 오류: {str(e)}")
+        except Exception as e:
+            logger.error(f"이미지 분석 실패: {str(e)}")
+            raise
 
     async def generate_recipes(
         self,
@@ -264,17 +327,18 @@ class OpenRouterService:
         }
 
         try:
-            response = requests.post(self.api_url, headers=headers, json=data, timeout=60)
-            response.raise_for_status()
-
-            result = response.json()
+            result = await self._make_api_request(data, timeout=60.0)
             content = result["choices"][0]["message"]["content"]
 
             # JSON 파싱
-            return self._parse_json_response(content)
+            parsed = self._parse_json_response(content)
+            logger.info(f"생성된 레시피 개수: {len(parsed.get('recipes', []))}")
 
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"OpenRouter API 오류: {str(e)}")
+            return parsed
+
+        except Exception as e:
+            logger.error(f"레시피 생성 실패: {str(e)}")
+            raise
 
     def _parse_json_response(self, content: str) -> Dict:
         """

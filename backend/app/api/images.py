@@ -8,10 +8,12 @@ from typing import Optional
 from app.db.database import get_db
 from app.services.openrouter_service import OpenRouterService
 from app.utils.image_utils import process_image
+from app.utils.logger import get_logger
 from app.models import ImageUpload, Ingredient
 
 router = APIRouter(prefix="/api/images", tags=["images"])
 openrouter_service = OpenRouterService()
+logger = get_logger(__name__)
 
 
 @router.post("/analyze")
@@ -32,8 +34,11 @@ async def analyze_image(
         인식된 재료 목록
     """
     try:
+        logger.info(f"이미지 분석 요청 - 파일명: {file.filename}, 사용자: {user_id}")
+
         # 1. 이미지 처리 및 Base64 인코딩
         image_base64 = await process_image(file)
+        logger.debug(f"이미지 처리 완료 - Base64 길이: {len(image_base64)}")
 
         # 2. OpenRouter API로 이미지 분석
         result = await openrouter_service.analyze_image(image_base64)
@@ -42,6 +47,7 @@ async def analyze_image(
         image_upload = ImageUpload(user_id=user_id)
         db.add(image_upload)
         await db.flush()  # ID 생성
+        logger.debug(f"이미지 업로드 레코드 생성 - ID: {image_upload.id}")
 
         # 4. 재료 저장
         ingredients_data = result.get("ingredients", [])
@@ -59,6 +65,7 @@ async def analyze_image(
             saved_ingredients.append(ingredient)
 
         await db.commit()
+        logger.info(f"이미지 분석 완료 - 재료 {len(saved_ingredients)}개 인식")
 
         # 5. 응답 생성
         return {
@@ -70,10 +77,12 @@ async def analyze_image(
 
     except ValueError as e:
         # 이미지 검증 실패
+        logger.warning(f"이미지 검증 실패: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
     except Exception as e:
         # 기타 오류
+        logger.error(f"이미지 분석 중 오류: {str(e)}", exc_info=True)
         await db.rollback()
         raise HTTPException(
             status_code=500,

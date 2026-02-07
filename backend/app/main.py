@@ -1,24 +1,32 @@
 """
 FastAPI 애플리케이션 진입점
 """
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.db.database import init_db
+from app.utils.logger import setup_logger
+
+# 루트 로거 설정
+setup_logger("app", level=logging.INFO)
+
+
+logger = logging.getLogger("app")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """애플리케이션 시작 및 종료 이벤트"""
     # 시작 시
-    print("🚀 Starting FridgeChef API...")
+    logger.info("🚀 Starting FridgeChef API...")
     await init_db()
-    print("✅ Database initialized")
+    logger.info("✅ Database initialized")
     yield
     # 종료 시
-    print("👋 Shutting down FridgeChef API...")
+    logger.info("👋 Shutting down FridgeChef API...")
 
 
 # FastAPI 앱 생성

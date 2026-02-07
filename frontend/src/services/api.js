@@ -126,10 +126,12 @@ export const saveRecipe = async (userId, recipeData) => {
 };
 
 /**
- * 저장된 레시피 목록 조회
+ * 저장된 레시피 목록 조회 (페이지네이션)
  */
-export const getSavedRecipes = async (userId) => {
-  const response = await apiClient.get(`/api/users/${userId}/recipes`);
+export const getSavedRecipes = async (userId, skip = 0, limit = 10) => {
+  const response = await apiClient.get(`/api/users/${userId}/recipes`, {
+    params: { skip, limit }
+  });
   return response.data;
 };
 

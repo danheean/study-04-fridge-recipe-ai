@@ -25,6 +25,13 @@ function Profile() {
   });
   const [loading, setLoading] = useState(true);
 
+  // 페이지네이션 상태
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalRecipes, setTotalRecipes] = useState(0);
+  const RECIPES_PER_PAGE = 12;
+
   // 데이터 로드
   useEffect(() => {
     loadData();
@@ -34,13 +41,17 @@ function Profile() {
     setLoading(true);
     try {
       // 병렬로 데이터 로드
-      const [recipes, stats, user] = await Promise.all([
-        getSavedRecipes(userId).catch(() => []),
+      const [recipesData, stats, user] = await Promise.all([
+        getSavedRecipes(userId, 0, RECIPES_PER_PAGE).catch(() => ({ recipes: [], total: 0, has_more: false })),
         getUserStats(userId).catch(() => null),
         getUser(userId).catch(() => null),
       ]);
 
-      setSavedRecipes(recipes);
+      setSavedRecipes(recipesData.recipes || []);
+      setTotalRecipes(recipesData.total || 0);
+      setHasMore(recipesData.has_more || false);
+      setPage(1);
+
       setUserStats(stats);
       setUserInfo(user);
 
@@ -51,6 +62,26 @@ function Profile() {
       console.error('Failed to load profile data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 더 많은 레시피 로드 (무한 스크롤)
+  const loadMoreRecipes = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const skip = page * RECIPES_PER_PAGE;
+      const recipesData = await getSavedRecipes(userId, skip, RECIPES_PER_PAGE);
+
+      setSavedRecipes((prev) => [...prev, ...(recipesData.recipes || [])]);
+      setHasMore(recipesData.has_more || false);
+      setPage((prev) => prev + 1);
+    } catch (error) {
+      console.error('Failed to load more recipes:', error);
+      toast.error('레시피를 더 불러오는데 실패했습니다.');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -272,7 +303,8 @@ function Profile() {
                     </p>
                   </div>
                 ) : (
-                  <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {savedRecipes.map((recipe) => (
                       <li key={recipe.id}>
                         <article
@@ -343,6 +375,28 @@ function Profile() {
                       </li>
                     ))}
                   </ul>
+
+                    {/* 더 보기 버튼 */}
+                    {hasMore && (
+                      <div className="mt-8 text-center">
+                        <button
+                          onClick={loadMoreRecipes}
+                          disabled={loadingMore}
+                          className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                          aria-busy={loadingMore}
+                        >
+                          {loadingMore ? (
+                            <span className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" aria-hidden="true"></div>
+                              로딩 중...
+                            </span>
+                          ) : (
+                            `더 보기 (${totalRecipes - savedRecipes.length}개 남음)`
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
