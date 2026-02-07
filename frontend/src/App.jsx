@@ -4,6 +4,7 @@ import { ChefHat, User as UserIcon } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LoadingProvider, useLoading } from './contexts/LoadingContext';
 import ImageUpload from './components/ImageUpload';
 import IngredientList from './components/IngredientList';
 import RecipeList from './components/RecipeList';
@@ -16,6 +17,7 @@ import { DEFAULT_USER_ID } from './utils/constants';
 function Home() {
   const toast = useToast();
   const { user } = useAuth();
+  const { startLoading, stopLoading } = useLoading();
   const imageUploadRef = useRef(null);
   const [ingredients, setIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
@@ -40,7 +42,9 @@ function Home() {
   };
 
   const handleGenerateRecipes = async () => {
+    const loadingKey = 'generate-recipes';
     setLoading(true);
+    startLoading(loadingKey);
     try {
       // 재료 이름 목록 추출
       const ingredientNames = ingredients.map((ing) => ing.name);
@@ -55,6 +59,7 @@ function Home() {
       toast.error(error.userMessage || '레시피 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
+      stopLoading(loadingKey);
     }
   };
 
@@ -75,27 +80,30 @@ function Home() {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <ChefHat className="w-8 h-8 text-primary-500" />
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg">
+              <ChefHat className="w-8 h-8 text-primary-500" aria-hidden="true" />
               <h1 className="text-2xl font-bold text-gray-900">FridgeChef</h1>
             </Link>
-            <div className="flex items-center gap-4">
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
-              >
-                <UserIcon className="w-5 h-5" />
-                프로필
-              </Link>
-              {ingredients.length > 0 && (
-                <button
-                  onClick={handleReset}
-                  className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            <nav aria-label="주요 네비게이션">
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1"
                 >
-                  새로 시작하기
-                </button>
-              )}
-            </div>
+                  <UserIcon className="w-5 h-5" aria-hidden="true" />
+                  프로필
+                </Link>
+                {ingredients.length > 0 && (
+                  <button
+                    onClick={handleReset}
+                    className="text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1"
+                    aria-label="재료 목록 초기화하고 새로 시작하기"
+                  >
+                    새로 시작하기
+                  </button>
+                )}
+              </div>
+            </nav>
           </div>
         </div>
       </header>
@@ -147,43 +155,45 @@ function Home() {
 
         {/* Features - 처음에만 표시 */}
         {showFeatures && (
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">📸</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                AI 재료 인식
-              </h3>
-              <p className="text-gray-600">
-                사진만 찍으면 AI가 냉장고 속 재료를 자동으로 인식합니다
-              </p>
-            </div>
+          <section className="mt-16" aria-label="서비스 기능 소개">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <article className="bg-white rounded-xl p-6 shadow-md">
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
+                  <span className="text-2xl" aria-hidden="true">📸</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  AI 재료 인식
+                </h3>
+                <p className="text-gray-600">
+                  사진만 찍으면 AI가 냉장고 속 재료를 자동으로 인식합니다
+                </p>
+              </article>
 
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">🍳</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                맞춤 레시피 추천
-              </h3>
-              <p className="text-gray-600">
-                보유한 재료로 만들 수 있는 다양한 레시피를 추천받으세요
-              </p>
-            </div>
+              <article className="bg-white rounded-xl p-6 shadow-md">
+                <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center mb-4">
+                  <span className="text-2xl" aria-hidden="true">🍳</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  맞춤 레시피 추천
+                </h3>
+                <p className="text-gray-600">
+                  보유한 재료로 만들 수 있는 다양한 레시피를 추천받으세요
+                </p>
+              </article>
 
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">💾</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                레시피 저장
-              </h3>
-              <p className="text-gray-600">
-                마음에 드는 레시피를 저장하고 언제든 다시 확인하세요
-              </p>
+              <article className="bg-white rounded-xl p-6 shadow-md">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <span className="text-2xl" aria-hidden="true">💾</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  레시피 저장
+                </h3>
+                <p className="text-gray-600">
+                  마음에 드는 레시피를 저장하고 언제든 다시 확인하세요
+                </p>
+              </article>
             </div>
-          </div>
+          </section>
         )}
       </main>
 
@@ -200,17 +210,19 @@ function Home() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Routes>
-          </Router>
-        </ToastProvider>
-      </AuthProvider>
+      <LoadingProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/register" element={<RegisterPage />} />
+              </Routes>
+            </Router>
+          </ToastProvider>
+        </AuthProvider>
+      </LoadingProvider>
     </ErrorBoundary>
   );
 }

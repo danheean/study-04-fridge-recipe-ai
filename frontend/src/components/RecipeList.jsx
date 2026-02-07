@@ -5,6 +5,7 @@ import { getDifficultyColor, getDifficultyText, DEFAULT_USER_ID } from '../utils
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
+import { SkeletonGrid, SkeletonRecipeCard } from './Skeleton';
 
 export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID }) {
   const toast = useToast();
@@ -15,10 +16,15 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
   const [pendingRecipe, setPendingRecipe] = useState(null);
   if (loading) {
     return (
-      <div className="mt-12 text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        <p className="mt-4 text-gray-600">레시피를 생성하고 있습니다...</p>
-      </div>
+      <section className="mt-12" aria-labelledby="recipes-loading">
+        <div className="flex items-center justify-between mb-6">
+          <h2 id="recipes-loading" className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <ChefHat className="w-6 h-6 text-primary-500" aria-hidden="true" />
+            레시피 생성 중...
+          </h2>
+        </div>
+        <SkeletonGrid count={3} SkeletonComponent={SkeletonRecipeCard} columns={3} />
+      </section>
     );
   }
 
@@ -77,54 +83,55 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
   };
 
   return (
-    <div className="mt-12">
+    <section className="mt-12" aria-labelledby="recipes-heading">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <ChefHat className="w-6 h-6 text-primary-500" />
+        <h2 id="recipes-heading" className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <ChefHat className="w-6 h-6 text-primary-500" aria-hidden="true" />
           추천 레시피
         </h2>
-        <p className="text-sm text-gray-600">{recipes.length}개의 레시피</p>
+        <p className="text-sm text-gray-600" role="status">{recipes.length}개의 레시피</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {recipes.map((recipe, index) => (
-          <div
+          <li
             key={index}
-            className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
           >
-            {/* Recipe Header */}
-            <div className="bg-gradient-to-r from-primary-500 to-secondary-500 p-6 text-white">
-              <h3 className="text-xl font-bold mb-2">{recipe.title}</h3>
-              <p className="text-sm opacity-90">{recipe.description}</p>
-            </div>
+            <article className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden h-full">
+              {/* Recipe Header */}
+              <header className="bg-gradient-to-r from-primary-500 to-secondary-500 p-6 text-white">
+                <h3 className="text-xl font-bold mb-2">{recipe.title}</h3>
+                <p className="text-sm opacity-90">{recipe.description}</p>
+              </header>
 
             {/* Recipe Info */}
             <div className="p-6">
               {/* Metadata */}
               <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{recipe.cooking_time}분</span>
+                  <Clock className="w-4 h-4" aria-hidden="true" />
+                  <span>조리 시간: {recipe.cooking_time}분</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Flame className="w-4 h-4" />
-                  <span>{recipe.calories}kcal</span>
+                  <Flame className="w-4 h-4" aria-hidden="true" />
+                  <span>칼로리: {recipe.calories}kcal</span>
                 </div>
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
                     recipe.difficulty
                   )}`}
+                  role="status"
                 >
-                  {getDifficultyText(recipe.difficulty)}
+                  난이도: {getDifficultyText(recipe.difficulty)}
                 </span>
               </div>
 
               {/* Ingredients */}
-              <div className="mb-4">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">재료</h4>
-                <div className="space-y-1">
+              <section className="mb-4" aria-labelledby={`ingredients-${index}`}>
+                <h4 id={`ingredients-${index}`} className="text-sm font-semibold text-gray-900 mb-2">재료</h4>
+                <ul className="space-y-1">
                   {recipe.ingredients.map((ingredient, idx) => (
-                    <div
+                    <li
                       key={idx}
                       className="flex items-center justify-between text-sm"
                     >
@@ -136,18 +143,19 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
                         }
                       >
                         {ingredient.name}
+                        {!ingredient.available && <span className="sr-only"> (보유하지 않음)</span>}
                       </span>
                       <span className="text-gray-500 text-xs">
                         {ingredient.quantity}
                       </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              </section>
 
               {/* Instructions */}
-              <div className="mb-4">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">조리 방법</h4>
+              <section className="mb-4" aria-labelledby={`instructions-${index}`}>
+                <h4 id={`instructions-${index}`} className="text-sm font-semibold text-gray-900 mb-2">조리 방법</h4>
                 <ol className="space-y-2 text-sm text-gray-600">
                   {recipe.instructions.map((step, idx) => (
                     <li key={idx} className="flex gap-2">
@@ -158,39 +166,46 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
                     </li>
                   ))}
                 </ol>
-              </div>
+              </section>
 
               {/* Action Button */}
               <button
                 onClick={() => handleSaveRecipe(recipe, index)}
                 disabled={savedRecipeIds.has(`${recipe.title}-${index}`) || savingIds.has(`${recipe.title}-${index}`)}
-                className={`w-full mt-4 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+                className={`w-full mt-4 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                   savedRecipeIds.has(`${recipe.title}-${index}`)
                     ? 'bg-emerald-500 text-white cursor-not-allowed'
                     : 'bg-primary-500 hover:bg-primary-600 text-white'
                 }`}
+                aria-busy={savingIds.has(`${recipe.title}-${index}`)}
+                aria-label={
+                  savedRecipeIds.has(`${recipe.title}-${index}`)
+                    ? `${recipe.title} 저장 완료`
+                    : `${recipe.title} 레시피 저장하기`
+                }
               >
                 {savingIds.has(`${recipe.title}-${index}`) ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" aria-hidden="true"></div>
                     저장 중...
                   </>
                 ) : savedRecipeIds.has(`${recipe.title}-${index}`) ? (
                   <>
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4" aria-hidden="true" />
                     저장 완료
                   </>
                 ) : (
                   <>
-                    <BookMarked className="w-4 h-4" />
+                    <BookMarked className="w-4 h-4" aria-hidden="true" />
                     이 레시피 저장하기
                   </>
                 )}
               </button>
             </div>
-          </div>
+            </article>
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* 로그인 모달 */}
       {showLoginModal && (
@@ -202,6 +217,6 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
           onLoginSuccess={handleLoginSuccess}
         />
       )}
-    </div>
+    </section>
   );
 }

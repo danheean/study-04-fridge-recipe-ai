@@ -153,10 +153,13 @@ export default function RegisterPage() {
                   }`}
                   placeholder="홍길동"
                   maxLength={100}
+                  required
+                  aria-invalid={errors.name ? 'true' : 'false'}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
                 />
               </div>
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                <p id="name-error" className="mt-1 text-sm text-red-600" role="alert">{errors.name}</p>
               )}
             </div>
 
@@ -178,10 +181,12 @@ export default function RegisterPage() {
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="example@email.com"
+                  aria-invalid={errors.email ? 'true' : 'false'}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">{errors.email}</p>
               )}
             </div>
 
@@ -261,11 +266,12 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              aria-busy={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                   생성 중...
                 </>
               ) : (

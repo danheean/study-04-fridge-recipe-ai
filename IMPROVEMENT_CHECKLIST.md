@@ -92,27 +92,32 @@ touch frontend/src/components/ErrorBoundary.jsx
 **난이도**: 보통
 **완료일**: 2026-02-07 (기반 구축)
 
-### 11. 접근성 완전 구현 (4시간)
-- [ ] 모든 컴포넌트에 ARIA 속성
-- [ ] 키보드 네비게이션
-- [ ] 색상 + 텍스트 정보 제공
-- [ ] 시맨틱 HTML 교체
+### 11. 접근성 완전 구현 ✅ (4시간)
+- [x] 모든 컴포넌트에 ARIA 속성 (role, aria-label, aria-labelledby, aria-describedby)
+- [x] 키보드 네비게이션 (Tab, Enter, ESC 키, 포커스 트랩)
+- [x] 색상 + 텍스트 정보 제공 (스크린 리더용 텍스트)
+- [x] 시맨틱 HTML 교체 (nav, section, article, header, footer, dl/dt/dd)
 
 **우선순위**: 🟠 높음
 **영향도**: 법적 요구사항, 포용성
 **난이도**: 보통
+**완료일**: 2026-02-08
 
 ---
 
 ## 🟡 MEDIUM PRIORITY - 1개월 내 완료
 
-### 12. 로딩 상태 통합 (2시간)
-- [ ] Context API로 전역 로딩 상태
-- [ ] 일관된 스켈레톤 UI
+### 12. 로딩 상태 통합 ✅ (2시간)
+- [x] Context API로 전역 로딩 상태 (LoadingContext)
+- [x] 일관된 스켈레톤 UI (SkeletonRecipeCard, SkeletonProfileCard 등)
+- [x] LoadingSpinner 컴포넌트
+- [x] RecipeList, Profile 페이지에 스켈레톤 UI 적용
+- [x] 전역 로딩 오버레이 컴포넌트
 
 **우선순위**: 🟡 중간
 **영향도**: UX 일관성
 **난이도**: 보통
+**완료일**: 2026-02-08
 
 ### 13. 비동기 최적화 (3시간)
 - [ ] requests → httpx
@@ -261,11 +266,11 @@ touch frontend/src/components/ErrorBoundary.jsx
 
 ## 📊 진행 상황 트래킹
 
-**완료**: 16 / 27 (59%)
+**완료**: 18 / 27 (67%)
 **진행 중**: 0 / 27
-**대기 중**: 11 / 27
+**대기 중**: 9 / 27
 
-**완료된 항목**: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10(부분), 21, 22, 23, 24, 25, 26
+**완료된 항목**: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10(부분), 11, 12, 21, 22, 23, 24, 25, 26
 **백로그**: 27 (관리 기능)
 
 **목표 일정**:

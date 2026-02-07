@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, User, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,6 +14,8 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
   const toast = useToast();
   const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
+  const modalRef = useRef(null);
+  const userIdInputRef = useRef(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -45,26 +47,80 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
     navigate('/register');
   };
 
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  // 모달 열릴 때 포커스 설정
+  useEffect(() => {
+    if (userIdInputRef.current) {
+      userIdInputRef.current.focus();
+    }
+  }, []);
+
+  // 포커스 트랩
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusableElements = modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    const handleTab = (e) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    modal.addEventListener('keydown', handleTab);
+    return () => modal.removeEventListener('keydown', handleTab);
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="login-modal-title"
     >
       <div
+        ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
+        <header className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 id="login-modal-title" className="text-2xl font-bold text-gray-900">로그인</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="닫기"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+            aria-label="로그인 모달 닫기"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
         {/* Content */}
         <div className="p-6">
@@ -76,13 +132,14 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
-                사용자 ID
+                사용자 ID <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="w-5 h-5 text-gray-400" />
+                  <User className="w-5 h-5 text-gray-400" aria-hidden="true" />
                 </div>
                 <input
+                  ref={userIdInputRef}
                   id="userId"
                   type="text"
                   value={userId}
@@ -90,9 +147,11 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
                   className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="demo-user-123"
                   disabled={loading}
+                  required
+                  aria-describedby="userId-hint"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p id="userId-hint" className="mt-1 text-xs text-gray-500">
                 기존 사용자 ID를 입력하세요
               </p>
             </div>
@@ -100,11 +159,12 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              aria-busy={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                   로그인 중...
                 </>
               ) : (

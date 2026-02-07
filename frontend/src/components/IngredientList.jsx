@@ -21,29 +21,42 @@ export default function IngredientList({ ingredients, onGenerateRecipes }) {
   const getFreshnessIcon = (freshness) => {
     switch (freshness) {
       case 'fresh':
-        return <CheckCircle2 className="w-4 h-4" />;
+        return <CheckCircle2 className="w-4 h-4" aria-hidden="true" />;
       case 'expiring':
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle className="w-4 h-4" aria-hidden="true" />;
       default:
-        return <Leaf className="w-4 h-4" />;
+        return <Leaf className="w-4 h-4" aria-hidden="true" />;
+    }
+  };
+
+  const getFreshnessText = (freshness) => {
+    switch (freshness) {
+      case 'fresh':
+        return '신선';
+      case 'moderate':
+        return '보통';
+      case 'expiring':
+        return '빨리 사용';
+      default:
+        return '미확인';
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-8">
+    <section className="max-w-3xl mx-auto mt-8" aria-labelledby="ingredients-heading">
       <div className="bg-white rounded-2xl shadow-lg p-8">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 id="ingredients-heading" className="text-2xl font-bold text-gray-900">
             인식된 재료
           </h3>
-          <span className="px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
+          <span className="px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold" role="status">
             {ingredients.length}개 발견
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {ingredients.map((ingredient) => (
-            <div
+            <li
               key={ingredient.id}
               className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
             >
@@ -58,34 +71,36 @@ export default function IngredientList({ ingredients, onGenerateRecipes }) {
                     </p>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className={`
-                      inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border
-                      ${getFreshnessColor(ingredient.freshness)}
-                    `}>
+                    <span
+                      className={`
+                        inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border
+                        ${getFreshnessColor(ingredient.freshness)}
+                      `}
+                      role="status"
+                      aria-label={`신선도: ${getFreshnessText(ingredient.freshness)}`}
+                    >
                       {getFreshnessIcon(ingredient.freshness)}
-                      {ingredient.freshness === 'fresh' && '신선'}
-                      {ingredient.freshness === 'moderate' && '보통'}
-                      {ingredient.freshness === 'expiring' && '빨리 사용'}
+                      <span>{getFreshnessText(ingredient.freshness)}</span>
                     </span>
                     {ingredient.confidence && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500" aria-label={`AI 확신도: ${Math.round(ingredient.confidence * 100)}%`}>
                         {Math.round(ingredient.confidence * 100)}% 확신
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
 
         <button
           onClick={onGenerateRecipes}
-          className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-4 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+          className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-4 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           이 재료로 레시피 찾기 🍳
         </button>
       </div>
-    </div>
+    </section>
   );
 }

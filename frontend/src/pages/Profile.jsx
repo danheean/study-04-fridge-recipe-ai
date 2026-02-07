@@ -5,6 +5,8 @@ import { getDifficultyColor, DEFAULT_USER_ID } from '../utils/constants';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeDetailModal from '../components/RecipeDetailModal';
+import { SkeletonStatsCard, SkeletonGrid, SkeletonProfileCard } from '../components/Skeleton';
+import { CenteredSpinner } from '../components/LoadingSpinner';
 
 function Profile() {
   const toast = useToast();
@@ -122,10 +124,32 @@ function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">프로필 로딩 중...</p>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+        {/* Header Skeleton */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Stats Cards Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <SkeletonStatsCard />
+            <SkeletonStatsCard />
+            <SkeletonStatsCard />
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <CenteredSpinner message="프로필 로딩 중..." />
+          </div>
         </div>
       </div>
     );
@@ -196,28 +220,36 @@ function Profile() {
 
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="border-b border-gray-200">
+          <div className="border-b border-gray-200" role="tablist" aria-label="프로필 탭">
             <div className="flex">
               <button
+                role="tab"
+                aria-selected={activeTab === 'recipes'}
+                aria-controls="recipes-panel"
+                id="recipes-tab"
                 onClick={() => setActiveTab('recipes')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+                className={`flex-1 py-4 px-6 text-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
                   activeTab === 'recipes'
                     ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <BookMarked className="w-5 h-5 inline-block mr-2" />
+                <BookMarked className="w-5 h-5 inline-block mr-2" aria-hidden="true" />
                 저장된 레시피
               </button>
               <button
+                role="tab"
+                aria-selected={activeTab === 'preferences'}
+                aria-controls="preferences-panel"
+                id="preferences-tab"
                 onClick={() => setActiveTab('preferences')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+                className={`flex-1 py-4 px-6 text-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
                   activeTab === 'preferences'
                     ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <Settings className="w-5 h-5 inline-block mr-2" />
+                <Settings className="w-5 h-5 inline-block mr-2" aria-hidden="true" />
                 선호도 설정
               </button>
             </div>
@@ -226,39 +258,52 @@ function Profile() {
           {/* Tab Content */}
           <div className="p-6">
             {activeTab === 'recipes' && (
-              <div>
+              <div
+                role="tabpanel"
+                id="recipes-panel"
+                aria-labelledby="recipes-tab"
+              >
                 {savedRecipes.length === 0 ? (
-                  <div className="text-center py-12">
-                    <BookMarked className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <div className="text-center py-12" role="status">
+                    <BookMarked className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
                     <p className="text-gray-500 text-lg">저장된 레시피가 없습니다</p>
                     <p className="text-gray-400 text-sm mt-2">
                       레시피를 저장하면 여기에 표시됩니다
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {savedRecipes.map((recipe) => (
-                      <div
-                        key={recipe.id}
-                        className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
-                        onClick={() => setSelectedRecipe(recipe)}
-                      >
-                        <div className="p-6">
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-lg font-bold text-gray-900 flex-1">
-                              {recipe.title}
-                            </h3>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteRecipe(recipe.id);
-                              }}
-                              className="text-red-500 hover:text-red-700 transition-colors ml-2"
-                              title="삭제"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
+                      <li key={recipe.id}>
+                        <article
+                          className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer h-full"
+                          onClick={() => setSelectedRecipe(recipe)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedRecipe(recipe);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`${recipe.title} 레시피 상세 보기`}
+                        >
+                          <div className="p-6">
+                            <header className="flex items-start justify-between mb-3">
+                              <h3 className="text-lg font-bold text-gray-900 flex-1">
+                                {recipe.title}
+                              </h3>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteRecipe(recipe.id);
+                                }}
+                                className="text-red-500 hover:text-red-700 transition-colors ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                                aria-label={`${recipe.title} 레시피 삭제`}
+                              >
+                                <Trash2 className="w-5 h-5" aria-hidden="true" />
+                              </button>
+                            </header>
 
                           <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                             {recipe.description}
@@ -266,26 +311,27 @@ function Profile() {
 
                           <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
                             <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              <span>{recipe.cooking_time}분</span>
+                              <Clock className="w-4 h-4" aria-hidden="true" />
+                              <span>조리 시간: {recipe.cooking_time}분</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Flame className="w-4 h-4" />
-                              <span>{recipe.calories || 0}kcal</span>
+                              <Flame className="w-4 h-4" aria-hidden="true" />
+                              <span>칼로리: {recipe.calories || 0}kcal</span>
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between">
+                          <footer className="flex items-center justify-between">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(recipe.difficulty)}`}
+                              role="status"
                             >
-                              {recipe.difficulty}
+                              난이도: {recipe.difficulty}
                             </span>
 
-                            <div className="text-xs text-gray-500">
+                            <time className="text-xs text-gray-500" dateTime={recipe.created_at}>
                               {new Date(recipe.created_at).toLocaleDateString('ko-KR')}
-                            </div>
-                          </div>
+                            </time>
+                          </footer>
                         </div>
 
                         <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
@@ -293,16 +339,22 @@ function Profile() {
                             재료 {recipe.ingredients?.length || 0}개
                           </p>
                         </div>
-                      </div>
+                        </article>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             )}
 
             {activeTab === 'preferences' && (
-              <div className="max-w-2xl">
-                <div className="space-y-6">
+              <div
+                className="max-w-2xl"
+                role="tabpanel"
+                id="preferences-panel"
+                aria-labelledby="preferences-tab"
+              >
+                <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSavePreferences(); }}>
                   {/* 식단 제한 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -409,12 +461,12 @@ function Profile() {
 
                   {/* 저장 버튼 */}
                   <button
-                    onClick={handleSavePreferences}
-                    className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors"
+                    type="submit"
+                    className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                   >
                     선호도 저장
                   </button>
-                </div>
+                </form>
               </div>
             )}
           </div>

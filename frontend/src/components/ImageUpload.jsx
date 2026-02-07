@@ -106,6 +106,7 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
           accept="image/*"
           onChange={handleChange}
           className="hidden"
+          aria-label="냉장고 이미지 파일 선택"
         />
 
         <label
@@ -123,12 +124,13 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
+          aria-busy={loading}
         >
           {preview ? (
             <div className="space-y-4">
               <img
                 src={preview}
-                alt="Preview"
+                alt="업로드된 냉장고 사진 미리보기"
                 className="max-h-64 mx-auto rounded-lg shadow-md"
               />
               {!loading && (
@@ -138,7 +140,7 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
                     e.preventDefault();
                     resetUpload();
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  className="text-sm text-gray-600 hover:text-gray-800 underline focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
                 >
                   다른 이미지 선택
                 </button>
@@ -146,7 +148,7 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
             </div>
           ) : (
             <div className="space-y-4">
-              <Upload className="w-16 h-16 mx-auto text-primary-500" />
+              <Upload className="w-16 h-16 mx-auto text-primary-500" aria-hidden="true" />
               <div>
                 <p className="text-xl font-semibold text-gray-700 mb-2">
                   냉장고 사진 업로드
@@ -162,8 +164,8 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
           )}
 
           {loading && (
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+            <div className="mt-6 flex items-center justify-center gap-3" role="status" aria-live="polite">
+              <Loader2 className="w-6 h-6 animate-spin text-primary-500" aria-hidden="true" />
               <p className="text-primary-600 font-medium">
                 AI가 재료를 분석하고 있습니다...
               </p>
@@ -173,7 +175,7 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
       </form>
 
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive">
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
