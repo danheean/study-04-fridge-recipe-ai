@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Rate Limit
     MAX_REQUESTS_PER_DAY: int = 50  # 무료 티어 제한
 
+    # 개발 모드
+    MOCK_MODE: bool = os.getenv("MOCK_MODE", "false").lower() == "true"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

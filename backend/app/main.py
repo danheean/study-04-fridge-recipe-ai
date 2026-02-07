@@ -60,6 +60,7 @@ async def health_check():
 
 
 # API 라우터 등록
-from app.api import images
+from app.api import images, recipes
 
 app.include_router(images.router)
+app.include_router(recipes.router)

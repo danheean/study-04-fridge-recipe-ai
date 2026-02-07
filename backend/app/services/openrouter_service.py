@@ -33,6 +33,50 @@ class OpenRouterService:
         Returns:
             인식된 재료 목록
         """
+        # 목 데이터 모드
+        if settings.MOCK_MODE:
+            print("[MOCK MODE] 목 데이터 반환")
+            return {
+                "ingredients": [
+                    {
+                        "name": "양배추",
+                        "quantity": "1통",
+                        "freshness": "fresh",
+                        "confidence": 0.95
+                    },
+                    {
+                        "name": "계란",
+                        "quantity": "10개",
+                        "freshness": "fresh",
+                        "confidence": 0.92
+                    },
+                    {
+                        "name": "오이",
+                        "quantity": "3개",
+                        "freshness": "moderate",
+                        "confidence": 0.88
+                    },
+                    {
+                        "name": "토마토",
+                        "quantity": "5개",
+                        "freshness": "fresh",
+                        "confidence": 0.90
+                    },
+                    {
+                        "name": "청양고추",
+                        "quantity": "한 줌",
+                        "freshness": "moderate",
+                        "confidence": 0.85
+                    },
+                    {
+                        "name": "파",
+                        "quantity": "2대",
+                        "freshness": "expiring",
+                        "confidence": 0.78
+                    }
+                ]
+            }
+
         headers = self._create_headers()
 
         prompt = """
@@ -108,6 +152,71 @@ class OpenRouterService:
         Returns:
             레시피 목록
         """
+        # 목 데이터 모드
+        if settings.MOCK_MODE:
+            print("[MOCK MODE] 목 레시피 반환")
+            return {
+                "recipes": [
+                    {
+                        "title": "오이무침",
+                        "description": "신선한 오이로 만드는 상큼한 반찬",
+                        "ingredients": [
+                            {"name": "오이", "quantity": "2개", "available": True},
+                            {"name": "고춧가루", "quantity": "1큰술", "available": False},
+                            {"name": "식초", "quantity": "2큰술", "available": False},
+                            {"name": "설탕", "quantity": "1큰술", "available": False}
+                        ],
+                        "instructions": [
+                            "오이를 깨끗이 씻어 얇게 썰어주세요",
+                            "소금을 뿌려 10분간 절여주세요",
+                            "물기를 짜고 양념(고춧가루, 식초, 설탕)을 넣어 버무립니다",
+                            "마지막으로 참기름을 넣어 마무리합니다"
+                        ],
+                        "cooking_time": 15,
+                        "difficulty": "easy",
+                        "calories": 45
+                    },
+                    {
+                        "title": "계란볶음밥",
+                        "description": "냉장고 재료로 간단하게 만드는 볶음밥",
+                        "ingredients": [
+                            {"name": "계란", "quantity": "3개", "available": True},
+                            {"name": "파", "quantity": "1대", "available": True},
+                            {"name": "밥", "quantity": "2공기", "available": False},
+                            {"name": "간장", "quantity": "2큰술", "available": False}
+                        ],
+                        "instructions": [
+                            "팬에 기름을 두르고 계란을 스크램블해주세요",
+                            "파를 송송 썰어 넣고 볶습니다",
+                            "밥을 넣고 계란과 골고루 섞어주세요",
+                            "간장으로 간을 맞추고 완성합니다"
+                        ],
+                        "cooking_time": 10,
+                        "difficulty": "easy",
+                        "calories": 420
+                    },
+                    {
+                        "title": "토마토 계란볶음",
+                        "description": "중국식 가정요리의 대표 메뉴",
+                        "ingredients": [
+                            {"name": "토마토", "quantity": "3개", "available": True},
+                            {"name": "계란", "quantity": "4개", "available": True},
+                            {"name": "설탕", "quantity": "1큰술", "available": False},
+                            {"name": "소금", "quantity": "약간", "available": False}
+                        ],
+                        "instructions": [
+                            "토마토를 큼직하게 썰어주세요",
+                            "계란을 풀어 스크램블을 만들고 따로 덜어둡니다",
+                            "같은 팬에 토마토를 넣고 볶다가 설탕을 넣습니다",
+                            "토마토가 무르면 계란을 넣고 가볍게 섞어 완성합니다"
+                        ],
+                        "cooking_time": 20,
+                        "difficulty": "easy",
+                        "calories": 280
+                    }
+                ]
+            }
+
         headers = self._create_headers()
 
         ingredients_str = ", ".join(ingredients)

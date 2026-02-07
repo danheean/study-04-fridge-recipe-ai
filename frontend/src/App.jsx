@@ -2,24 +2,44 @@ import { useState } from 'react';
 import { ChefHat } from 'lucide-react';
 import ImageUpload from './components/ImageUpload';
 import IngredientList from './components/IngredientList';
+import RecipeList from './components/RecipeList';
+import { generateRecipes } from './services/api';
 
 function App() {
   const [ingredients, setIngredients] = useState([]);
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showFeatures, setShowFeatures] = useState(true);
 
   const handleAnalysisComplete = (result) => {
     console.log('Analysis result:', result);
     setIngredients(result.ingredients || []);
+    setRecipes([]);
     setShowFeatures(false);
   };
 
-  const handleGenerateRecipes = () => {
-    // TODO: Phase 3에서 구현
-    alert('레시피 생성 기능은 Phase 3에서 구현됩니다!');
+  const handleGenerateRecipes = async () => {
+    setLoading(true);
+    try {
+      // 재료 이름 목록 추출
+      const ingredientNames = ingredients.map((ing) => ing.name);
+
+      // API 호출
+      const result = await generateRecipes(ingredientNames);
+      console.log('Recipe generation result:', result);
+
+      setRecipes(result.recipes || []);
+    } catch (error) {
+      console.error('레시피 생성 실패:', error);
+      alert('레시피 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
     setIngredients([]);
+    setRecipes([]);
     setShowFeatures(true);
   };
 
@@ -66,6 +86,9 @@ function App() {
             onGenerateRecipes={handleGenerateRecipes}
           />
         )}
+
+        {/* Recipe List */}
+        <RecipeList recipes={recipes} loading={loading} />
 
         {/* Features - 처음에만 표시 */}
         {showFeatures && (
