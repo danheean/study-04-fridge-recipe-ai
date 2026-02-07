@@ -1,0 +1,15 @@
+{
+  "title": "테스트 레시피 - 계란말이",
+  "description": "간단하고 맛있는 계란말이",
+  "ingredients": [
+    {"name": "계란", "quantity": "4개", "available": true},
+    {"name": "소금", "quantity": "약간", "available": true}
+  ],
+  "instructions": [
+    "계란을 풀어줍니다",
+    "팬에 기름을 두르고 계란물을 부어 말아줍니다"
+  ],
+  "cooking_time": 10,
+  "difficulty": "easy",
+  "calories": 280
+}

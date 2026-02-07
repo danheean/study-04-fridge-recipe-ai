@@ -1,6 +1,18 @@
-import { Clock, ChefHat, Flame } from 'lucide-react';
+import { useState } from 'react';
+import { Clock, ChefHat, Flame, BookMarked, Check } from 'lucide-react';
+import { saveRecipe } from '../services/api';
+import { getDifficultyColor, getDifficultyText, DEFAULT_USER_ID } from '../utils/constants';
+import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
+import LoginModal from './LoginModal';
 
-export default function RecipeList({ recipes, loading }) {
+export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID }) {
+  const toast = useToast();
+  const { isAuthenticated } = useAuth();
+  const [savedRecipeIds, setSavedRecipeIds] = useState(new Set());
+  const [savingIds, setSavingIds] = useState(new Set());
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingRecipe, setPendingRecipe] = useState(null);
   if (loading) {
     return (
       <div className="mt-12 text-center">
@@ -10,33 +22,57 @@ export default function RecipeList({ recipes, loading }) {
     );
   }
 
+  // 로그인 성공 후 대기 중인 레시피 저장
+  const handleLoginSuccess = () => {
+    if (pendingRecipe) {
+      handleSaveRecipe(pendingRecipe.recipe, pendingRecipe.index);
+      setPendingRecipe(null);
+    }
+  };
+
   if (!recipes || recipes.length === 0) {
     return null;
   }
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'medium':
-        return 'bg-amber-100 text-amber-700';
-      case 'hard':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
+  const handleSaveRecipe = async (recipe, index) => {
+    const recipeKey = `${recipe.title}-${index}`;
 
-  const getDifficultyText = (difficulty) => {
-    switch (difficulty) {
-      case 'easy':
-        return '쉬움';
-      case 'medium':
-        return '보통';
-      case 'hard':
-        return '어려움';
-      default:
-        return difficulty;
+    if (savedRecipeIds.has(recipeKey)) {
+      toast.warning('이미 저장된 레시피입니다.');
+      return;
+    }
+
+    // 인증 확인
+    if (!isAuthenticated) {
+      setPendingRecipe({ recipe, index });
+      setShowLoginModal(true);
+      return;
+    }
+
+    setSavingIds(prev => new Set(prev).add(recipeKey));
+
+    try {
+      await saveRecipe(userId, {
+        title: recipe.title,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        cooking_time: recipe.cooking_time,
+        difficulty: recipe.difficulty,
+        calories: recipe.calories || 0,
+      });
+
+      setSavedRecipeIds(prev => new Set(prev).add(recipeKey));
+      toast.success('레시피가 저장되었습니다!');
+    } catch (error) {
+      console.error('Failed to save recipe:', error);
+      toast.error(error.userMessage || '레시피 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setSavingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(recipeKey);
+        return newSet;
+      });
     }
   };
 
@@ -125,13 +161,47 @@ export default function RecipeList({ recipes, loading }) {
               </div>
 
               {/* Action Button */}
-              <button className="w-full mt-4 bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
-                이 레시피 저장하기
+              <button
+                onClick={() => handleSaveRecipe(recipe, index)}
+                disabled={savedRecipeIds.has(`${recipe.title}-${index}`) || savingIds.has(`${recipe.title}-${index}`)}
+                className={`w-full mt-4 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  savedRecipeIds.has(`${recipe.title}-${index}`)
+                    ? 'bg-emerald-500 text-white cursor-not-allowed'
+                    : 'bg-primary-500 hover:bg-primary-600 text-white'
+                }`}
+              >
+                {savingIds.has(`${recipe.title}-${index}`) ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    저장 중...
+                  </>
+                ) : savedRecipeIds.has(`${recipe.title}-${index}`) ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    저장 완료
+                  </>
+                ) : (
+                  <>
+                    <BookMarked className="w-4 h-4" />
+                    이 레시피 저장하기
+                  </>
+                )}
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => {
+            setShowLoginModal(false);
+            setPendingRecipe(null);
+          }}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
     </div>
   );
 }

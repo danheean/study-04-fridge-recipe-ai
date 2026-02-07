@@ -1,21 +1,42 @@
-import { useState } from 'react';
-import { ChefHat } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { ChefHat, User as UserIcon } from 'lucide-react';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider, useToast } from './contexts/ToastContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ImageUpload from './components/ImageUpload';
 import IngredientList from './components/IngredientList';
 import RecipeList from './components/RecipeList';
+import AnalysisInfo from './components/AnalysisInfo';
+import Profile from './pages/Profile';
+import RegisterPage from './pages/RegisterPage';
 import { generateRecipes } from './services/api';
+import { DEFAULT_USER_ID } from './utils/constants';
 
-function App() {
+function Home() {
+  const toast = useToast();
+  const { user } = useAuth();
+  const imageUploadRef = useRef(null);
   const [ingredients, setIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showFeatures, setShowFeatures] = useState(true);
+  const [analysisMetadata, setAnalysisMetadata] = useState(null);
+  const userId = user?.id || DEFAULT_USER_ID;
 
   const handleAnalysisComplete = (result) => {
     console.log('Analysis result:', result);
     setIngredients(result.ingredients || []);
     setRecipes([]);
     setShowFeatures(false);
+
+    // 분석 메타데이터 저장
+    setAnalysisMetadata({
+      model: result.model,
+      duration: result.analysisDuration,
+      fileName: result.fileName,
+      fileSize: result.fileSize,
+    });
   };
 
   const handleGenerateRecipes = async () => {
@@ -31,7 +52,7 @@ function App() {
       setRecipes(result.recipes || []);
     } catch (error) {
       console.error('레시피 생성 실패:', error);
-      alert('레시피 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      toast.error(error.userMessage || '레시피 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -41,6 +62,11 @@ function App() {
     setIngredients([]);
     setRecipes([]);
     setShowFeatures(true);
+    setAnalysisMetadata(null);
+    // ImageUpload 컴포넌트도 초기화
+    if (imageUploadRef.current) {
+      imageUploadRef.current.reset();
+    }
   };
 
   return (
@@ -49,18 +75,27 @@ function App() {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <ChefHat className="w-8 h-8 text-primary-500" />
               <h1 className="text-2xl font-bold text-gray-900">FridgeChef</h1>
-            </div>
-            {ingredients.length > 0 && (
-              <button
-                onClick={handleReset}
-                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
-                새로 시작하기
-              </button>
-            )}
+                <UserIcon className="w-5 h-5" />
+                프로필
+              </Link>
+              {ingredients.length > 0 && (
+                <button
+                  onClick={handleReset}
+                  className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  새로 시작하기
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -76,19 +111,39 @@ function App() {
           </p>
         </div>
 
-        {/* Image Upload */}
-        <ImageUpload onAnalysisComplete={handleAnalysisComplete} />
+        {/* Image Upload - 분석 전에만 중앙 배치 */}
+        {ingredients.length === 0 && (
+          <ImageUpload ref={imageUploadRef} onAnalysisComplete={handleAnalysisComplete} />
+        )}
 
-        {/* Ingredient List */}
+        {/* 분석 완료 후: 2컬럼 레이아웃 */}
         {ingredients.length > 0 && (
-          <IngredientList
-            ingredients={ingredients}
-            onGenerateRecipes={handleGenerateRecipes}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* 좌측: 분석 정보 */}
+            <div className="space-y-6">
+              <AnalysisInfo metadata={analysisMetadata} />
+
+              {/* 작은 이미지 업로드 (재업로드용) */}
+              <div className="bg-white rounded-xl p-6 shadow-md">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  다른 이미지 분석하기
+                </h3>
+                <ImageUpload ref={imageUploadRef} onAnalysisComplete={handleAnalysisComplete} />
+              </div>
+            </div>
+
+            {/* 우측: 재료 목록 */}
+            <div>
+              <IngredientList
+                ingredients={ingredients}
+                onGenerateRecipes={handleGenerateRecipes}
+              />
+            </div>
+          </div>
         )}
 
         {/* Recipe List */}
-        <RecipeList recipes={recipes} loading={loading} />
+        <RecipeList recipes={recipes} loading={loading} userId={userId} />
 
         {/* Features - 처음에만 표시 */}
         {showFeatures && (
@@ -139,6 +194,24 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Routes>
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

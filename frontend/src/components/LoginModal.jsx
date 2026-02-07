@@ -1,0 +1,146 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, User, Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+
+/**
+ * 로그인 모달
+ * 레시피 저장 등 인증이 필요한 작업 시 표시
+ */
+export default function LoginModal({ onClose, onLoginSuccess }) {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const toast = useToast();
+  const [userId, setUserId] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    if (!userId.trim()) {
+      toast.warning('사용자 ID를 입력해주세요.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await login(userId.trim());
+      toast.success('로그인되었습니다!');
+      onClose();
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast.error(error.userMessage || '로그인에 실패했습니다. 사용자 ID를 확인해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = () => {
+    onClose();
+    navigate('/register');
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="닫기"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <p className="text-gray-600 mb-6">
+            레시피를 저장하려면 로그인이 필요합니다
+          </p>
+
+          {/* Login Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
+                사용자 ID
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="w-5 h-5 text-gray-400" />
+                </div>
+                <input
+                  id="userId"
+                  type="text"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="demo-user-123"
+                  disabled={loading}
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                기존 사용자 ID를 입력하세요
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  로그인 중...
+                </>
+              ) : (
+                '로그인'
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">또는</span>
+            </div>
+          </div>
+
+          {/* Register Button */}
+          <button
+            onClick={handleRegister}
+            disabled={loading}
+            className="w-full bg-white text-primary-500 border-2 border-primary-500 py-3 rounded-lg font-medium hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            새 계정 만들기
+          </button>
+
+          {/* Demo User Info */}
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900 font-medium mb-1">💡 테스트용 계정</p>
+            <p className="text-xs text-blue-700">
+              사용자 ID: <code className="bg-blue-100 px-2 py-0.5 rounded">demo-user-123</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,8 +1,9 @@
 """
 이미지 업로드 및 분석 API
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.db.database import get_db
 from app.services.openrouter_service import OpenRouterService
@@ -16,6 +17,7 @@ openrouter_service = OpenRouterService()
 @router.post("/analyze")
 async def analyze_image(
     file: UploadFile = File(...),
+    user_id: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -23,6 +25,7 @@ async def analyze_image(
 
     Args:
         file: 업로드된 이미지 파일
+        user_id: 사용자 ID (선택사항)
         db: 데이터베이스 세션
 
     Returns:
@@ -36,7 +39,7 @@ async def analyze_image(
         result = await openrouter_service.analyze_image(image_base64)
 
         # 3. 데이터베이스에 저장
-        image_upload = ImageUpload()
+        image_upload = ImageUpload(user_id=user_id)
         db.add(image_upload)
         await db.flush()  # ID 생성
 
