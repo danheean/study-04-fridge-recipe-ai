@@ -23,10 +23,10 @@ class OllamaService:
 
     def __init__(self):
         self.base_url = "http://localhost:11434"
-        self.image_model = "qwen3-vl:8b"  # 이미지 분석용 멀티모달 모델
+        self.image_model = "gemma3:12b"  # 이미지 분석용 멀티모달 모델
 
-        # httpx 클라이언트 설정 (qwen3-vl은 느릴 수 있으므로 타임아웃 증가)
-        self.timeout = httpx.Timeout(180.0, connect=10.0)
+        # httpx 클라이언트 설정 (이미지 분석은 느릴 수 있음)
+        self.timeout = httpx.Timeout(240.0, connect=10.0)
         self.limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
 
     @retry(
@@ -102,24 +102,21 @@ class OllamaService:
 
         base_prompt = """이 냉장고 사진을 분석하여 보이는 모든 재료를 추출해주세요.
 
-다음 JSON 형식으로만 응답해주세요:
+반드시 다음 JSON 형식으로만 응답하세요. 다른 설명이나 스키마는 포함하지 마세요:
 {
   "ingredients": [
-    {
-      "name": "재료명",
-      "quantity": "수량 (예: 2개, 500g, 1팩)",
-      "freshness": "신선도 (fresh/moderate/expiring 중 하나)",
-      "confidence": 0.95
-    }
+    {"name": "당근", "quantity": "3개", "freshness": "fresh", "confidence": 0.95},
+    {"name": "계란", "quantity": "10개", "freshness": "moderate", "confidence": 0.90}
   ]
 }
 
-주의사항:
+중요:
+- JSON 객체만 반환하세요
+- ingredients 배열 안에 실제 재료 정보를 넣으세요
 - 명확히 보이는 재료만 포함
 - 한글 재료명 사용
-- 수량은 대략적으로 추정
-- freshness는 재료의 색깔과 상태를 보고 판단 (신선: fresh, 보통: moderate, 시들: expiring)
-- confidence는 0.0~1.0 사이의 값으로 얼마나 확신하는지 표시
+- freshness: fresh, moderate, expiring 중 하나
+- confidence: 0.0~1.0 사이의 숫자
 """
 
         # 커스텀 프롬프트가 있으면 추가
@@ -141,7 +138,7 @@ class OllamaService:
             result = await self._make_chat_request(
                 model=self.image_model,
                 messages=messages,
-                timeout=180.0
+                timeout=240.0
             )
 
             content = result.get("message", {}).get("content", "{}")
@@ -149,6 +146,11 @@ class OllamaService:
 
             # JSON 파싱
             parsed = self._parse_json_response(content)
+
+            # 단일 객체를 배열로 변환 (qwen3-vl:4b가 단일 객체 반환 가능)
+            if "name" in parsed and "ingredients" not in parsed:
+                logger.info("단일 재료 객체 감지 - 배열로 변환")
+                parsed = {"ingredients": [parsed]}
 
             # ingredients가 없으면 빈 배열 반환
             if "ingredients" not in parsed or not isinstance(parsed["ingredients"], list):
