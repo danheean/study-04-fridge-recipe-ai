@@ -36,7 +36,8 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
     }
   };
 
-  if (!recipes || recipes.length === 0) {
+  // 배열 유효성 검사
+  if (!Array.isArray(recipes) || recipes.length === 0) {
     return null;
   }
 
@@ -93,9 +94,13 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
       </div>
 
       <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recipes.map((recipe, index) => (
+        {recipes.map((recipe, index) => {
+          // 안정적인 key 생성: 제목과 인덱스 조합
+          const recipeKey = `${recipe.title}-${index}`;
+
+          return (
           <li
-            key={index}
+            key={recipeKey}
           >
             <article className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden h-full">
               {/* Recipe Header */}
@@ -130,7 +135,7 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
               <section className="mb-4" aria-labelledby={`ingredients-${index}`}>
                 <h4 id={`ingredients-${index}`} className="text-sm font-semibold text-gray-900 mb-2">재료</h4>
                 <ul className="space-y-1">
-                  {recipe.ingredients.map((ingredient, idx) => (
+                  {Array.isArray(recipe.ingredients) && recipe.ingredients.map((ingredient, idx) => (
                     <li
                       key={idx}
                       className="flex items-center justify-between text-sm"
@@ -157,7 +162,7 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
               <section className="mb-4" aria-labelledby={`instructions-${index}`}>
                 <h4 id={`instructions-${index}`} className="text-sm font-semibold text-gray-900 mb-2">조리 방법</h4>
                 <ol className="space-y-2 text-sm text-gray-600">
-                  {recipe.instructions.map((step, idx) => (
+                  {Array.isArray(recipe.instructions) && recipe.instructions.map((step, idx) => (
                     <li key={idx} className="flex gap-2">
                       <span className="font-medium text-primary-500 shrink-0">
                         {idx + 1}.
@@ -204,7 +209,8 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
             </div>
             </article>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       {/* 로그인 모달 */}

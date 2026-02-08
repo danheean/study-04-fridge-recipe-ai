@@ -128,15 +128,17 @@ export default function RecipeDetailModal({ recipe, onClose }) {
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
-                  recipe.ingredients.map((ingredient, idx) => (
+                  recipe.ingredients.map((ingredient, idx) => {
+                    const ingredientName = typeof ingredient === 'string'
+                      ? ingredient
+                      : ingredient.name || ingredient;
+                    return (
                     <div
-                      key={idx}
+                      key={`ingredient-${ingredientName}-${idx}`}
                       className="flex items-center justify-between bg-white px-4 py-2 rounded-lg"
                     >
                       <span className="text-gray-700 font-medium">
-                        {typeof ingredient === 'string'
-                          ? ingredient
-                          : ingredient.name || ingredient}
+                        {ingredientName}
                       </span>
                       <span className="text-gray-500 text-sm">
                         {typeof ingredient === 'object' && ingredient.quantity
@@ -144,7 +146,8 @@ export default function RecipeDetailModal({ recipe, onClose }) {
                           : '적당량'}
                       </span>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="text-gray-500 text-sm col-span-2">재료 정보가 없습니다.</p>
                 )}
@@ -162,7 +165,7 @@ export default function RecipeDetailModal({ recipe, onClose }) {
               {recipe.instructions && recipe.instructions.length > 0 ? (
                 recipe.instructions.map((step, idx) => (
                   <div
-                    key={idx}
+                    key={`step-${idx}-${step.substring(0, 20)}`}
                     className="flex gap-4 bg-gradient-to-r from-primary-50 to-white p-4 rounded-xl border border-primary-100"
                   >
                     <div className="flex-shrink-0 w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center font-bold text-sm">

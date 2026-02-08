@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, Settings, BookMarked, TrendingUp, Trash2, Clock, ChefHat, Flame } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, Settings, BookMarked, TrendingUp, Trash2, Clock, ChefHat, Flame, ArrowLeft } from 'lucide-react';
 import { getSavedRecipes, deleteSavedRecipe, getUserStats, updatePreferences, getUser } from '../services/api';
 import { getDifficultyColor, DEFAULT_USER_ID } from '../utils/constants';
 import { useToast } from '../contexts/ToastContext';
@@ -10,6 +11,7 @@ import { SkeletonStatsCard, SkeletonGrid, SkeletonProfileCard } from '../compone
 import { CenteredSpinner } from '../components/LoadingSpinner';
 
 function Profile() {
+  const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
   const confirm = useConfirm();
@@ -168,13 +170,31 @@ function Profile() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
         {/* Header Skeleton */}
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse"></div>
-              <div className="space-y-2">
-                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+        <header className="bg-white shadow-sm sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-2 min-h-[44px] active:scale-95"
+                  aria-label="이전 페이지로 돌아가기"
+                >
+                  <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+                </button>
+                <button
+                  onClick={() => navigate('/')}
+                  className="flex items-center gap-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg"
+                  aria-label="홈으로 이동"
+                >
+                  <ChefHat className="w-8 h-8 text-primary-500" aria-hidden="true" />
+                  <h1 className="text-2xl font-bold text-gray-900">FridgeChef</h1>
+                </button>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -200,18 +220,35 @@ function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-2 min-h-[44px] active:scale-95"
+                aria-label="이전 페이지로 돌아가기"
+              >
+                <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg"
+                aria-label="홈으로 이동"
+              >
+                <ChefHat className="w-8 h-8 text-primary-500" aria-hidden="true" />
+                <h1 className="text-2xl font-bold text-gray-900">FridgeChef</h1>
+              </button>
+            </div>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-primary-500" />
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-primary-500" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {userInfo?.name || '사용자'}
-                </h1>
-                <p className="text-gray-500 text-sm">{userInfo?.email || ''}</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {userInfo?.name || '데모 사용자'}
+                </p>
+                <p className="text-xs text-gray-500">{userInfo?.email || ''}</p>
               </div>
             </div>
           </div>

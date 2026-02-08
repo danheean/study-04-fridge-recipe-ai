@@ -165,6 +165,12 @@ async def get_saved_recipes(
     """
     logger.info(f"레시피 목록 조회 - 사용자: {user_id}, skip: {skip}, limit: {limit}")
 
+    # 파라미터 검증
+    if skip < 0:
+        raise HTTPException(status_code=400, detail="skip 값은 0 이상이어야 합니다.")
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="limit 값은 1 이상이어야 합니다.")
+
     # 사용자 존재 확인
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()

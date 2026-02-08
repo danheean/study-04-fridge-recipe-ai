@@ -1,7 +1,7 @@
 import { CheckCircle2, AlertCircle, Leaf } from 'lucide-react';
 
 export default function IngredientList({ ingredients, onGenerateRecipes }) {
-  if (!ingredients || ingredients.length === 0) {
+  if (!Array.isArray(ingredients) || ingredients.length === 0) {
     return null;
   }
 

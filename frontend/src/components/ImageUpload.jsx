@@ -54,6 +54,10 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
     // 미리보기 생성
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
+    reader.onerror = () => {
+      setError('파일을 읽는 중 오류가 발생했습니다.');
+      setLoading(false);
+    };
     reader.readAsDataURL(file);
 
     // API 호출
@@ -75,7 +79,8 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
       });
     } catch (err) {
       console.error('Analysis error:', err);
-      setError(err.response?.data?.detail || '이미지 분석 중 오류가 발생했습니다.');
+      // API interceptor가 추가한 userMessage 사용
+      setError(err.userMessage || err.message || '이미지 분석 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
