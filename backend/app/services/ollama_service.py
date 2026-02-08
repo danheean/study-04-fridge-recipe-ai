@@ -23,9 +23,9 @@ class OllamaService:
 
     def __init__(self):
         self.base_url = "http://localhost:11434"
-        self.image_model = "gemma3:12b"  # 이미지 분석용 멀티모달 모델
+        self.image_model = "gemma3:12b"  # 이미지 분석용 멀티모달 모델 (빠르고 안정적)
 
-        # httpx 클라이언트 설정 (이미지 분석은 느릴 수 있음)
+        # httpx 클라이언트 설정
         self.timeout = httpx.Timeout(240.0, connect=10.0)
         self.limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
 
