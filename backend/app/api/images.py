@@ -6,13 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.db.database import get_db
-from app.services.openrouter_service import OpenRouterService
+from app.services.ollama_service import OllamaService
 from app.utils.image_utils import process_image
 from app.utils.logger import get_logger
 from app.models import ImageUpload, Ingredient
 
 router = APIRouter(prefix="/api/images", tags=["images"])
-openrouter_service = OpenRouterService()
+ollama_service = OllamaService()
 logger = get_logger(__name__)
 
 
@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 async def analyze_image(
     file: UploadFile = File(...),
     user_id: Optional[str] = Form(None),
+    custom_prompt: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -40,8 +41,8 @@ async def analyze_image(
         image_base64 = await process_image(file)
         logger.debug(f"이미지 처리 완료 - Base64 길이: {len(image_base64)}")
 
-        # 2. OpenRouter API로 이미지 분석
-        result = await openrouter_service.analyze_image(image_base64)
+        # 2. Ollama API로 이미지 분석
+        result = await ollama_service.analyze_image(image_base64, custom_prompt=custom_prompt)
 
         # 3. 데이터베이스에 저장
         image_upload = ImageUpload(user_id=user_id)
@@ -72,7 +73,8 @@ async def analyze_image(
             "success": True,
             "image_id": image_upload.id,
             "ingredients": [ing.to_dict() for ing in saved_ingredients],
-            "total_count": len(saved_ingredients)
+            "total_count": len(saved_ingredients),
+            "model": result.get("model", "gemma3:12b")  # 사용된 모델 정보
         }
 
     except ValueError as e:

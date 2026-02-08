@@ -6,8 +6,7 @@ import { mockIngredients, mockRecipes, delay } from './mockData';
 import { getErrorMessage } from '../utils/errorHandler';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === 'true' || true; // 기본값: true (목 데이터 사용)
-const USE_MOCK_FOR_USER_API = false; // 사용자/레시피 저장 API는 실제 백엔드 사용
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === 'true'; // 환경변수로 목 데이터 사용 여부 제어
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -29,7 +28,7 @@ apiClient.interceptors.response.use(
 /**
  * 이미지 분석 API
  */
-export const analyzeImage = async (file, userId = 'demo-user-123') => {
+export const analyzeImage = async (file, customPrompt = null, userId = 'demo-user-123') => {
   // 목 데이터 사용
   if (USE_MOCK_DATA) {
     console.log('📸 [MOCK] 이미지 분석 중...', file.name);
@@ -42,6 +41,9 @@ export const analyzeImage = async (file, userId = 'demo-user-123') => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('user_id', userId);
+  if (customPrompt) {
+    formData.append('custom_prompt', customPrompt);
+  }
 
   const response = await apiClient.post('/api/images/analyze', formData, {
     headers: {
@@ -84,10 +86,18 @@ export const createUser = async (userData) => {
 };
 
 /**
- * 사용자 정보 조회
+ * 사용자 정보 조회 (ID)
  */
 export const getUser = async (userId) => {
   const response = await apiClient.get(`/api/users/${userId}`);
+  return response.data;
+};
+
+/**
+ * 사용자 정보 조회 (이메일)
+ */
+export const getUserByEmail = async (email) => {
+  const response = await apiClient.get(`/api/users/by-email/${encodeURIComponent(email)}`);
   return response.data;
 };
 
@@ -148,6 +158,48 @@ export const getSavedRecipe = async (userId, recipeId) => {
  */
 export const deleteSavedRecipe = async (userId, recipeId) => {
   const response = await apiClient.delete(`/api/users/${userId}/recipes/${recipeId}`);
+  return response.data;
+};
+
+// ===== 관리자 API =====
+
+/**
+ * 전체 사용자 목록 조회 (관리자 전용)
+ */
+export const getAllUsers = async (adminId, skip = 0, limit = 20) => {
+  const response = await apiClient.get('/api/admin/users', {
+    params: { admin_id: adminId, skip, limit }
+  });
+  return response.data;
+};
+
+/**
+ * 전체 시스템 통계 조회 (관리자 전용)
+ */
+export const getAdminStats = async (adminId) => {
+  const response = await apiClient.get('/api/admin/stats', {
+    params: { admin_id: adminId }
+  });
+  return response.data;
+};
+
+/**
+ * 사용자 삭제 (관리자 전용)
+ */
+export const deleteUser = async (adminId, userId) => {
+  const response = await apiClient.delete(`/api/admin/users/${userId}`, {
+    params: { admin_id: adminId }
+  });
+  return response.data;
+};
+
+/**
+ * 사용자 관리자 권한 설정/해제 (관리자 전용)
+ */
+export const toggleAdminRole = async (adminId, userId, isAdmin) => {
+  const response = await apiClient.put(`/api/admin/users/${userId}/admin`, null, {
+    params: { admin_id: adminId, is_admin: isAdmin }
+  });
   return response.data;
 };
 

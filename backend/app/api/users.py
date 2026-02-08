@@ -41,6 +41,18 @@ async def create_user(user_data: UserCreate, db: AsyncSession = Depends(get_db))
     return user
 
 
+@router.get("/by-email/{email}", response_model=UserResponse)
+async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
+    """이메일로 사용자 정보 조회"""
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    return user
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
     """사용자 정보 조회"""

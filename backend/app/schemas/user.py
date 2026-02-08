@@ -59,6 +59,7 @@ class UserResponse(BaseModel):
     id: str
     email: Optional[str]
     name: str
+    is_admin: bool = False
     preferences: Dict
     created_at: datetime
 

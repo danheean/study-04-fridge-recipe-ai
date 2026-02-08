@@ -1,7 +1,7 @@
 """
 사용자(User) 모델
 """
-from sqlalchemy import Column, String, JSON, DateTime
+from sqlalchemy import Column, String, JSON, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
@@ -16,6 +16,7 @@ class User(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String, unique=True, index=True, nullable=True)
     name = Column(String)
+    is_admin = Column(Boolean, default=False)  # 관리자 권한
     preferences = Column(JSON, default={})  # 선호도 설정
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -32,6 +33,7 @@ class User(Base):
             "id": self.id,
             "email": self.email,
             "name": self.name,
+            "is_admin": self.is_admin,
             "preferences": self.preferences,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

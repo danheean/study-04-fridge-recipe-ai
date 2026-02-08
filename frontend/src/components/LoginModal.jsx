@@ -12,23 +12,23 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const toast = useToast();
-  const [userId, setUserId] = useState('');
+  const [emailOrId, setEmailOrId] = useState('');
   const [loading, setLoading] = useState(false);
   const modalRef = useRef(null);
-  const userIdInputRef = useRef(null);
+  const emailInputRef = useRef(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!userId.trim()) {
-      toast.warning('사용자 ID를 입력해주세요.');
+    if (!emailOrId.trim()) {
+      toast.warning('이메일 주소를 입력해주세요.');
       return;
     }
 
     setLoading(true);
 
     try {
-      await login(userId.trim());
+      await login(emailOrId.trim());
       toast.success('로그인되었습니다!');
       onClose();
       if (onLoginSuccess) {
@@ -36,7 +36,7 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
       }
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error(error.userMessage || '로그인에 실패했습니다. 사용자 ID를 확인해주세요.');
+      toast.error(error.userMessage || '로그인에 실패했습니다. 이메일 주소를 확인해주세요.');
     } finally {
       setLoading(false);
     }
@@ -61,8 +61,8 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
 
   // 모달 열릴 때 포커스 설정
   useEffect(() => {
-    if (userIdInputRef.current) {
-      userIdInputRef.current.focus();
+    if (emailInputRef.current) {
+      emailInputRef.current.focus();
     }
   }, []);
 
@@ -131,28 +131,28 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
-                사용자 ID <span className="text-red-500">*</span>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                이메일 주소 <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="w-5 h-5 text-gray-400" aria-hidden="true" />
                 </div>
                 <input
-                  ref={userIdInputRef}
-                  id="userId"
+                  ref={emailInputRef}
+                  id="email"
                   type="text"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
+                  value={emailOrId}
+                  onChange={(e) => setEmailOrId(e.target.value)}
                   className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="demo-user-123"
+                  placeholder="demo@fridgechef.com"
                   disabled={loading}
                   required
-                  aria-describedby="userId-hint"
+                  aria-describedby="email-hint"
                 />
               </div>
-              <p id="userId-hint" className="mt-1 text-xs text-gray-500">
-                기존 사용자 ID를 입력하세요
+              <p id="email-hint" className="mt-1 text-xs text-gray-500">
+                등록된 이메일 주소를 입력하세요
               </p>
             </div>
 
@@ -196,7 +196,7 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-900 font-medium mb-1">💡 테스트용 계정</p>
             <p className="text-xs text-blue-700">
-              사용자 ID: <code className="bg-blue-100 px-2 py-0.5 rounded">demo-user-123</code>
+              이메일: <code className="bg-blue-100 px-2 py-0.5 rounded">demo@fridgechef.com</code>
             </p>
           </div>
         </div>

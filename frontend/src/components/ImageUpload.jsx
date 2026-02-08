@@ -1,6 +1,6 @@
 import { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Upload, Loader2 } from 'lucide-react';
-import { analyzeImage } from '../services/api';
+import { processAndAnalyzeImage } from '../utils/imageAnalysis';
 
 const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
   const [preview, setPreview] = useState(null);
@@ -37,49 +37,20 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
   };
 
   const handleFile = async (file) => {
-    // 파일 타입 검증
-    if (!file.type.startsWith('image/')) {
-      setError('이미지 파일만 업로드할 수 있습니다.');
-      return;
-    }
-
-    // 파일 크기 검증 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('파일 크기는 10MB 이하여야 합니다.');
-      return;
-    }
-
     setError(null);
-
-    // 미리보기 생성
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target.result);
-    reader.onerror = () => {
-      setError('파일을 읽는 중 오류가 발생했습니다.');
-      setLoading(false);
-    };
-    reader.readAsDataURL(file);
-
-    // API 호출
     setLoading(true);
-    const startTime = Date.now();
-    try {
-      const result = await analyzeImage(file);
-      const endTime = Date.now();
-      const duration = ((endTime - startTime) / 1000).toFixed(1);
 
-      // 분석 결과와 함께 이미지 정보도 전달
-      onAnalysisComplete({
-        ...result,
-        imagePreview: null, // 프리뷰는 ImageUpload에서 관리
-        fileName: file.name,
-        fileSize: file.size,
-        analysisDuration: duration,
-        model: 'GPT-4 Vision (Mock)', // 실제로는 API 응답에서 가져와야 함
-      });
+    try {
+      // 공통 유틸리티 함수 사용
+      const result = await processAndAnalyzeImage(file);
+
+      // 프리뷰 설정
+      setPreview(result.imagePreview);
+
+      // 분석 완료 콜백 호출 (파일 객체도 함께 전달)
+      onAnalysisComplete(result, file);
     } catch (err) {
       console.error('Analysis error:', err);
-      // API interceptor가 추가한 userMessage 사용
       setError(err.userMessage || err.message || '이미지 분석 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -162,7 +133,7 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
                   클릭하거나 드래그 앤 드롭으로 이미지를 업로드하세요
                 </p>
                 <p className="text-xs text-gray-400 mt-2">
-                  JPG, PNG 파일 (최대 10MB)
+                  JPG, PNG 파일 (최대 20MB)
                 </p>
               </div>
             </div>

@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     ]
 
     # 이미지 설정
-    MAX_IMAGE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    MAX_IMAGE_SIZE: int = 20 * 1024 * 1024  # 20MB
     ALLOWED_IMAGE_TYPES: list = ["image/jpeg", "image/png", "image/jpg"]
     IMAGE_RESIZE_MAX: int = 1024  # 최대 너비/높이
 

@@ -1,9 +1,87 @@
-import { CheckCircle2, AlertCircle, Leaf } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, AlertCircle, Leaf, Trash2, Plus, X, Edit2 } from 'lucide-react';
 
-export default function IngredientList({ ingredients, onGenerateRecipes }) {
+export default function IngredientList({ ingredients, onGenerateRecipes, onIngredientsChange }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [newIngredient, setNewIngredient] = useState({ name: '', quantity: '', freshness: 'moderate' });
+  const [editIngredient, setEditIngredient] = useState({ name: '', quantity: '', freshness: 'moderate' });
+
   if (!Array.isArray(ingredients) || ingredients.length === 0) {
     return null;
   }
+
+  // 재료 삭제
+  const handleDelete = (ingredientId) => {
+    if (onIngredientsChange) {
+      const updated = ingredients.filter(ing => ing.id !== ingredientId);
+      onIngredientsChange(updated);
+    }
+  };
+
+  // 재료 추가
+  const handleAdd = () => {
+    if (!newIngredient.name.trim()) return;
+
+    if (onIngredientsChange) {
+      const newItem = {
+        id: `manual-${Date.now()}`,
+        name: newIngredient.name.trim(),
+        quantity: newIngredient.quantity.trim() || '1개',
+        freshness: newIngredient.freshness,
+        confidence: null,
+        manual: true, // 수동 추가 플래그
+      };
+      onIngredientsChange([...ingredients, newItem]);
+    }
+
+    // 폼 초기화
+    setNewIngredient({ name: '', quantity: '', freshness: 'moderate' });
+    setShowAddForm(false);
+  };
+
+  // 재료 수정 시작
+  const handleEditStart = (ingredient) => {
+    setEditingId(ingredient.id);
+    setEditIngredient({
+      name: ingredient.name,
+      quantity: ingredient.quantity || '',
+      freshness: ingredient.freshness,
+    });
+  };
+
+  // 재료 수정 저장
+  const handleEditSave = (ingredientId) => {
+    if (!editIngredient.name.trim()) return;
+
+    if (onIngredientsChange) {
+      const updated = ingredients.map(ing =>
+        ing.id === ingredientId
+          ? {
+              ...ing,
+              name: editIngredient.name.trim(),
+              quantity: editIngredient.quantity.trim() || ing.quantity,
+              freshness: editIngredient.freshness,
+            }
+          : ing
+      );
+      onIngredientsChange(updated);
+    }
+
+    setEditingId(null);
+  };
+
+  // 수정 취소
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditIngredient({ name: '', quantity: '', freshness: 'moderate' });
+  };
+
+  // 추가 취소
+  const handleCancel = () => {
+    setNewIngredient({ name: '', quantity: '', freshness: 'moderate' });
+    setShowAddForm(false);
+  };
 
   const getFreshnessColor = (freshness) => {
     switch (freshness) {
@@ -43,7 +121,7 @@ export default function IngredientList({ ingredients, onGenerateRecipes }) {
   };
 
   return (
-    <section className="max-w-3xl mx-auto mt-8" aria-labelledby="ingredients-heading">
+    <section aria-labelledby="ingredients-heading">
       <div className="bg-white rounded-2xl shadow-lg p-8">
         <div className="flex items-center justify-between mb-6">
           <h3 id="ingredients-heading" className="text-2xl font-bold text-gray-900">
@@ -58,40 +136,205 @@ export default function IngredientList({ ingredients, onGenerateRecipes }) {
           {ingredients.map((ingredient) => (
             <li
               key={ingredient.id}
-              className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
+              className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors relative group"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 mb-1">
-                    {ingredient.name}
-                  </h4>
-                  {ingredient.quantity && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      수량: {ingredient.quantity}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`
-                        inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border
-                        ${getFreshnessColor(ingredient.freshness)}
-                      `}
-                      role="status"
-                      aria-label={`신선도: ${getFreshnessText(ingredient.freshness)}`}
-                    >
-                      {getFreshnessIcon(ingredient.freshness)}
-                      <span>{getFreshnessText(ingredient.freshness)}</span>
-                    </span>
-                    {ingredient.confidence && (
-                      <span className="text-xs text-gray-500" aria-label={`AI 확신도: ${Math.round(ingredient.confidence * 100)}%`}>
-                        {Math.round(ingredient.confidence * 100)}% 확신
-                      </span>
-                    )}
+              {editingId === ingredient.id ? (
+                // 수정 모드
+                <div className="space-y-3">
+                  <div>
+                    <label htmlFor={`edit-name-${ingredient.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                      재료명 *
+                    </label>
+                    <input
+                      id={`edit-name-${ingredient.id}`}
+                      type="text"
+                      value={editIngredient.name}
+                      onChange={(e) => setEditIngredient({ ...editIngredient, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
                   </div>
+                  <div>
+                    <label htmlFor={`edit-quantity-${ingredient.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                      수량
+                    </label>
+                    <input
+                      id={`edit-quantity-${ingredient.id}`}
+                      type="text"
+                      value={editIngredient.quantity}
+                      onChange={(e) => setEditIngredient({ ...editIngredient, quantity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor={`edit-freshness-${ingredient.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                      신선도
+                    </label>
+                    <select
+                      id={`edit-freshness-${ingredient.id}`}
+                      value={editIngredient.freshness}
+                      onChange={(e) => setEditIngredient({ ...editIngredient, freshness: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="fresh">신선</option>
+                      <option value="moderate">보통</option>
+                      <option value="expiring">빨리 사용</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditSave(ingredient.id)}
+                      disabled={!editIngredient.name.trim()}
+                      className="flex-1 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95 disabled:cursor-not-allowed"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={handleEditCancel}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 active:scale-95"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // 일반 표시 모드
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-gray-900">
+                        {ingredient.name}
+                      </h4>
+                      {ingredient.manual && (
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                          수동
+                        </span>
+                      )}
+                    </div>
+                    {ingredient.quantity && (
+                      <p className="text-sm text-gray-600 mb-2">
+                        수량: {ingredient.quantity}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`
+                          inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border
+                          ${getFreshnessColor(ingredient.freshness)}
+                        `}
+                        role="status"
+                        aria-label={`신선도: ${getFreshnessText(ingredient.freshness)}`}
+                      >
+                        {getFreshnessIcon(ingredient.freshness)}
+                        <span>{getFreshnessText(ingredient.freshness)}</span>
+                      </span>
+                      {ingredient.confidence && (
+                        <span className="text-xs text-gray-500" aria-label={`AI 확신도: ${Math.round(ingredient.confidence * 100)}%`}>
+                          {Math.round(ingredient.confidence * 100)}% 확신
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="ml-2 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                    <button
+                      onClick={() => handleEditStart(ingredient)}
+                      className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95"
+                      aria-label={`${ingredient.name} 수정`}
+                      title="재료 수정"
+                    >
+                      <Edit2 className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(ingredient.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 active:scale-95"
+                      aria-label={`${ingredient.name} 삭제`}
+                      title="재료 삭제"
+                    >
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+
+          {/* 재료 추가 폼 */}
+          {showAddForm && (
+            <li className="border-2 border-dashed border-primary-300 rounded-lg p-4 bg-primary-50">
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="ingredient-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    재료명 *
+                  </label>
+                  <input
+                    id="ingredient-name"
+                    type="text"
+                    value={newIngredient.name}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
+                    placeholder="예: 당근"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ingredient-quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                    수량
+                  </label>
+                  <input
+                    id="ingredient-quantity"
+                    type="text"
+                    value={newIngredient.quantity}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, quantity: e.target.value })}
+                    placeholder="예: 2개"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ingredient-freshness" className="block text-sm font-medium text-gray-700 mb-1">
+                    신선도
+                  </label>
+                  <select
+                    id="ingredient-freshness"
+                    value={newIngredient.freshness}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, freshness: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="fresh">신선</option>
+                    <option value="moderate">보통</option>
+                    <option value="expiring">빨리 사용</option>
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAdd}
+                    disabled={!newIngredient.name.trim()}
+                    className="flex-1 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95 disabled:cursor-not-allowed"
+                  >
+                    추가
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 active:scale-95"
+                  >
+                    취소
+                  </button>
                 </div>
               </div>
             </li>
-          ))}
+          )}
+
+          {/* 재료 추가 버튼 */}
+          {!showAddForm && (
+            <li>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="w-full h-full min-h-[120px] border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-primary-400 hover:bg-primary-50 transition-colors flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95"
+                aria-label="재료 추가하기"
+              >
+                <Plus className="w-8 h-8" aria-hidden="true" />
+                <span className="font-medium">재료 추가</span>
+              </button>
+            </li>
+          )}
         </ul>
 
         <button

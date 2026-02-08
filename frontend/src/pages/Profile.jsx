@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Settings, BookMarked, TrendingUp, Trash2, Clock, ChefHat, Flame, ArrowLeft } from 'lucide-react';
+import { User, Settings, BookMarked, TrendingUp, Trash2, Clock, ChefHat, Flame, ArrowLeft, LogOut } from 'lucide-react';
 import { getSavedRecipes, deleteSavedRecipe, getUserStats, updatePreferences, getUser } from '../services/api';
 import { getDifficultyColor, DEFAULT_USER_ID } from '../utils/constants';
 import { useToast } from '../contexts/ToastContext';
@@ -13,7 +13,7 @@ import { CenteredSpinner } from '../components/LoadingSpinner';
 function Profile() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const confirm = useConfirm();
   const userId = user?.id || DEFAULT_USER_ID;
   const [activeTab, setActiveTab] = useState('recipes');
@@ -165,6 +165,22 @@ function Profile() {
     }
   };
 
+  // 로그아웃
+  const handleLogout = async () => {
+    const confirmed = await confirm({
+      title: '로그아웃',
+      message: '정말로 로그아웃 하시겠습니까?',
+      confirmLabel: '로그아웃',
+      cancelLabel: '취소',
+    });
+
+    if (!confirmed) return;
+
+    logout();
+    toast.success('로그아웃되었습니다.');
+    navigate('/');
+  };
+
 
   if (loading) {
     return (
@@ -241,15 +257,25 @@ function Profile() {
               </button>
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-primary-500" aria-hidden="true" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary-500" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {userInfo?.name || '데모 사용자'}
+                  </p>
+                  <p className="text-xs text-gray-500">{userInfo?.email || ''}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {userInfo?.name || '데모 사용자'}
-                </p>
-                <p className="text-xs text-gray-500">{userInfo?.email || ''}</p>
-              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg px-3 py-2.5 min-h-[44px] active:bg-red-50 active:scale-95"
+                aria-label="로그아웃"
+              >
+                <LogOut className="w-5 h-5" aria-hidden="true" />
+                로그아웃
+              </button>
             </div>
           </div>
         </div>

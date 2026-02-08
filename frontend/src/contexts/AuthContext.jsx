@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getUser } from '../services/api';
+import { getUser, getUserByEmail } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -35,11 +35,20 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  const login = async (userId) => {
+  const login = async (emailOrId) => {
     try {
-      const userData = await getUser(userId);
+      let userData;
+
+      // 이메일 형식인지 확인 (@ 포함 여부)
+      if (emailOrId.includes('@')) {
+        userData = await getUserByEmail(emailOrId);
+      } else {
+        // ID로 로그인 (하위 호환성)
+        userData = await getUser(emailOrId);
+      }
+
       setUser(userData);
-      localStorage.setItem('userId', userId);
+      localStorage.setItem('userId', userData.id);
       return userData;
     } catch (error) {
       console.error('Login failed:', error);
@@ -61,6 +70,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated: !!user,
+    isAdmin: !!user?.is_admin,
     login,
     logout,
     register,
