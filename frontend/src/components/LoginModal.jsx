@@ -12,7 +12,8 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const toast = useToast();
-  const [emailOrId, setEmailOrId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const modalRef = useRef(null);
   const emailInputRef = useRef(null);
@@ -20,15 +21,20 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!emailOrId.trim()) {
+    if (!email.trim()) {
       toast.warning('이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    if (!password) {
+      toast.warning('비밀번호를 입력해주세요.');
       return;
     }
 
     setLoading(true);
 
     try {
-      await login(emailOrId.trim());
+      await login(email.trim(), password);
       toast.success('로그인되었습니다!');
       onClose();
       if (onLoginSuccess) {
@@ -36,7 +42,7 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
       }
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error(error.userMessage || '로그인에 실패했습니다. 이메일 주소를 확인해주세요.');
+      toast.error(error.userMessage || '로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.');
     } finally {
       setLoading(false);
     }
@@ -141,9 +147,9 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
                 <input
                   ref={emailInputRef}
                   id="email"
-                  type="text"
-                  value={emailOrId}
-                  onChange={(e) => setEmailOrId(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="demo@fridgechef.com"
                   disabled={loading}
@@ -154,6 +160,23 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
               <p id="email-hint" className="mt-1 text-xs text-gray-500">
                 등록된 이메일 주소를 입력하세요
               </p>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                비밀번호 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="비밀번호를 입력하세요"
+                disabled={loading}
+                required
+                minLength={8}
+              />
             </div>
 
             <button
@@ -195,8 +218,11 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
           {/* Demo User Info */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-900 font-medium mb-1">💡 테스트용 계정</p>
-            <p className="text-xs text-blue-700">
+            <p className="text-xs text-blue-700 mb-1">
               이메일: <code className="bg-blue-100 px-2 py-0.5 rounded">demo@fridgechef.com</code>
+            </p>
+            <p className="text-xs text-blue-700">
+              비밀번호: <code className="bg-blue-100 px-2 py-0.5 rounded">demo1234</code>
             </p>
           </div>
         </div>

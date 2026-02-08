@@ -15,10 +15,30 @@ const apiClient = axios.create({
   },
 });
 
-// 응답 인터셉터: 에러를 사용자 친화적 메시지로 변환
+// 요청 인터셉터: JWT 토큰 자동 추가
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// 응답 인터셉터: 에러를 사용자 친화적 메시지로 변환 + 401 에러 처리
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // 401 Unauthorized: 자동 로그아웃
+    if (error.response?.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      // 로그인 페이지로 리다이렉트 또는 이벤트 발생
+      window.dispatchEvent(new Event('unauthorized'));
+    }
+
     // 에러 객체에 사용자 친화적 메시지 추가
     error.userMessage = getErrorMessage(error);
     return Promise.reject(error);
@@ -72,6 +92,35 @@ export const generateRecipes = async (ingredients, preferences = {}) => {
     preferences,
   });
 
+  return response.data;
+};
+
+// ===== 인증 관련 API =====
+
+/**
+ * 로그인
+ */
+export const loginApi = async (email, password) => {
+  const response = await apiClient.post('/api/auth/login', { email, password });
+  return response.data;
+};
+
+/**
+ * 회원가입
+ */
+export const registerApi = async (email, password, name) => {
+  const response = await apiClient.post('/api/auth/register', { email, password, name });
+  return response.data;
+};
+
+/**
+ * 비밀번호 재설정 (기존 사용자용)
+ */
+export const resetPasswordApi = async (email, newPassword) => {
+  const response = await apiClient.post('/api/auth/reset-password', {
+    email,
+    new_password: newPassword,
+  });
   return response.data;
 };
 

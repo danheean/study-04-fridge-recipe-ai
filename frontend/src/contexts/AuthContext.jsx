@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getUser, getUserByEmail } from '../services/api';
+import { loginApi, registerApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -15,18 +15,21 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 앱 시작 시 localStorage에서 사용자 ID 확인
+  // 앱 시작 시 localStorage에서 JWT 토큰 및 사용자 정보 확인
   useEffect(() => {
-    const loadUser = async () => {
-      const userId = localStorage.getItem('userId');
-      if (userId) {
+    const loadUser = () => {
+      const token = localStorage.getItem('accessToken');
+      const userStr = localStorage.getItem('user');
+
+      if (token && userStr) {
         try {
-          const userData = await getUser(userId);
+          const userData = JSON.parse(userStr);
           setUser(userData);
         } catch (error) {
           console.error('Failed to load user:', error);
           // 사용자 정보를 불러올 수 없으면 localStorage 초기화
-          localStorage.removeItem('userId');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
         }
       }
       setLoading(false);
@@ -35,20 +38,16 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  const login = async (emailOrId) => {
+  const login = async (email, password) => {
     try {
-      let userData;
+      const response = await loginApi(email, password);
+      const { access_token, user: userData } = response;
 
-      // 이메일 형식인지 확인 (@ 포함 여부)
-      if (emailOrId.includes('@')) {
-        userData = await getUserByEmail(emailOrId);
-      } else {
-        // ID로 로그인 (하위 호환성)
-        userData = await getUser(emailOrId);
-      }
-
+      // JWT 토큰 및 사용자 정보 저장
+      localStorage.setItem('accessToken', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
-      localStorage.setItem('userId', userData.id);
+
       return userData;
     } catch (error) {
       console.error('Login failed:', error);
@@ -58,12 +57,25 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('userId');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
   };
 
-  const register = (userData) => {
-    setUser(userData);
-    localStorage.setItem('userId', userData.id);
+  const register = async (email, password, name) => {
+    try {
+      const response = await registerApi(email, password, name);
+      const { access_token, user: userData } = response;
+
+      // JWT 토큰 및 사용자 정보 저장
+      localStorage.setItem('accessToken', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+
+      return userData;
+    } catch (error) {
+      console.error('Registration failed:', error);
+      throw error;
+    }
   };
 
   const value = {

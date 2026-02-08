@@ -13,6 +13,7 @@ from app.models.image_upload import ImageUpload
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPreferences
 from app.schemas.recipe import RecipeCreate, SavedRecipeResponse
 from app.utils.logger import get_logger
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 logger = get_logger(__name__)
@@ -55,8 +56,19 @@ async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
-    """사용자 정보 조회"""
+async def get_user(
+    user_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """사용자 정보 조회 (본인 또는 관리자만 가능)"""
+    # 권한 확인: 본인 또는 관리자만 조회 가능
+    if current_user.id != user_id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 정보만 조회할 수 있습니다"
+        )
+
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
 
@@ -70,9 +82,17 @@ async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
 async def update_user(
     user_id: str,
     user_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """사용자 정보 수정"""
+    """사용자 정보 수정 (본인만 가능)"""
+    # 권한 확인: 본인만 수정 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 정보만 수정할 수 있습니다"
+        )
+
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
 
@@ -106,9 +126,17 @@ async def update_user(
 async def update_preferences(
     user_id: str,
     preferences: UserPreferences,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """사용자 선호도 설정 업데이트"""
+    """사용자 선호도 설정 업데이트 (본인만 가능)"""
+    # 권한 확인: 본인만 수정 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 선호도만 수정할 수 있습니다"
+        )
+
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
 
@@ -127,9 +155,17 @@ async def update_preferences(
 async def save_recipe(
     user_id: str,
     recipe_data: RecipeCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """레시피 저장"""
+    """레시피 저장 (본인만 가능)"""
+    # 권한 확인: 본인만 저장 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 레시피만 저장할 수 있습니다"
+        )
+
     # 사용자 존재 확인
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -158,12 +194,13 @@ async def save_recipe(
 @router.get("/{user_id}/recipes")
 async def get_saved_recipes(
     user_id: str,
+    current_user: User = Depends(get_current_user),
     skip: int = 0,
     limit: int = 10,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    저장된 레시피 목록 조회 (페이지네이션 지원)
+    저장된 레시피 목록 조회 (페이지네이션 지원, 본인만 가능)
 
     Args:
         user_id: 사용자 ID
@@ -176,6 +213,13 @@ async def get_saved_recipes(
         skip: 건너뛴 개수
         limit: 가져온 개수
     """
+    # 권한 확인: 본인만 조회 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 레시피만 조회할 수 있습니다"
+        )
+
     logger.info(f"레시피 목록 조회 - 사용자: {user_id}, skip: {skip}, limit: {limit}")
 
     # 파라미터 검증
@@ -227,9 +271,17 @@ async def get_saved_recipes(
 async def get_saved_recipe(
     user_id: str,
     recipe_id: str,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """저장된 레시피 상세 조회"""
+    """저장된 레시피 상세 조회 (본인만 가능)"""
+    # 권한 확인: 본인만 조회 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 레시피만 조회할 수 있습니다"
+        )
+
     result = await db.execute(
         select(SavedRecipe).filter(
             SavedRecipe.id == recipe_id,
@@ -248,9 +300,17 @@ async def get_saved_recipe(
 async def delete_saved_recipe(
     user_id: str,
     recipe_id: str,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """저장된 레시피 삭제"""
+    """저장된 레시피 삭제 (본인만 가능)"""
+    # 권한 확인: 본인만 삭제 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 레시피만 삭제할 수 있습니다"
+        )
+
     result = await db.execute(
         select(SavedRecipe).filter(
             SavedRecipe.id == recipe_id,
@@ -269,8 +329,19 @@ async def delete_saved_recipe(
 
 
 @router.get("/{user_id}/stats")
-async def get_user_stats(user_id: str, db: AsyncSession = Depends(get_db)):
-    """사용자 통계 조회"""
+async def get_user_stats(
+    user_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """사용자 통계 조회 (본인만 가능)"""
+    # 권한 확인: 본인만 조회 가능
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="본인의 통계만 조회할 수 있습니다"
+        )
+
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:

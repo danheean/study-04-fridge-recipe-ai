@@ -11,7 +11,8 @@ from app.db.database import get_db
 from app.services.ollama_service import OllamaService
 from app.utils.image_utils import process_image
 from app.utils.logger import get_logger
-from app.models import ImageUpload, Ingredient
+from app.models import ImageUpload, Ingredient, User
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/images", tags=["images"])
 ollama_service = OllamaService()
@@ -21,23 +22,24 @@ logger = get_logger(__name__)
 @router.post("/analyze")
 async def analyze_image(
     file: UploadFile = File(...),
-    user_id: Optional[str] = Form(None),
     custom_prompt: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    이미지 업로드 및 재료 인식
+    이미지 업로드 및 재료 인식 (로그인 필요)
 
     Args:
         file: 업로드된 이미지 파일
-        user_id: 사용자 ID (선택사항)
+        custom_prompt: 커스텀 프롬프트 (선택사항)
+        current_user: 현재 로그인한 사용자
         db: 데이터베이스 세션
 
     Returns:
         인식된 재료 목록
     """
     try:
-        logger.info(f"이미지 분석 요청 - 파일명: {file.filename}, 사용자: {user_id}")
+        logger.info(f"이미지 분석 요청 - 파일명: {file.filename}, 사용자: {current_user.id}")
 
         # 1. 이미지 처리 및 Base64 인코딩
         image_base64 = await process_image(file)
@@ -46,8 +48,8 @@ async def analyze_image(
         # 2. Ollama API로 이미지 분석
         result = await ollama_service.analyze_image(image_base64, custom_prompt=custom_prompt)
 
-        # 3. 데이터베이스에 저장
-        image_upload = ImageUpload(user_id=user_id)
+        # 3. 데이터베이스에 저장 (user_id는 current_user.id 사용)
+        image_upload = ImageUpload(user_id=current_user.id)
         db.add(image_upload)
         await db.flush()  # ID 생성
         logger.debug(f"이미지 업로드 레코드 생성 - ID: {image_upload.id}")

@@ -11,28 +11,15 @@ from app.models.user import User
 from app.models.recipe import SavedRecipe
 from app.models.image_upload import ImageUpload
 from app.utils.logger import get_logger
+from app.dependencies.auth import require_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 logger = get_logger(__name__)
 
 
-async def verify_admin(user_id: str, db: AsyncSession):
-    """관리자 권한 확인"""
-    result = await db.execute(select(User).filter(User.id == user_id))
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
-
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
-
-    return user
-
-
 @router.get("/users")
 async def get_all_users(
-    admin_id: str,
+    admin_user: User = Depends(require_admin),
     skip: int = 0,
     limit: int = 20,
     db: AsyncSession = Depends(get_db)
@@ -41,12 +28,10 @@ async def get_all_users(
     전체 사용자 목록 조회 (관리자 전용)
 
     Args:
-        admin_id: 관리자 ID
         skip: 건너뛸 개수
         limit: 가져올 개수 (최대 100)
     """
-    # 관리자 권한 확인
-    await verify_admin(admin_id, db)
+    # JWT 토큰으로 관리자 권한 이미 확인됨
 
     # 파라미터 검증
     if skip < 0:
@@ -80,17 +65,13 @@ async def get_all_users(
 
 @router.get("/stats")
 async def get_admin_stats(
-    admin_id: str,
+    admin_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
     전체 시스템 통계 조회 (관리자 전용)
-
-    Args:
-        admin_id: 관리자 ID
     """
-    # 관리자 권한 확인
-    await verify_admin(admin_id, db)
+    # JWT 토큰으로 관리자 권한 이미 확인됨
 
     # 전체 사용자 수
     users_result = await db.execute(select(func.count()).select_from(User))
@@ -121,7 +102,7 @@ async def get_admin_stats(
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
-    admin_id: str,
+    admin_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -129,13 +110,11 @@ async def delete_user(
 
     Args:
         user_id: 삭제할 사용자 ID
-        admin_id: 관리자 ID
     """
-    # 관리자 권한 확인
-    await verify_admin(admin_id, db)
+    # JWT 토큰으로 관리자 권한 이미 확인됨
 
     # 자기 자신 삭제 방지
-    if user_id == admin_id:
+    if user_id == admin_user.id:
         raise HTTPException(status_code=400, detail="자기 자신은 삭제할 수 없습니다.")
 
     # 사용자 조회
@@ -149,7 +128,7 @@ async def delete_user(
     await db.delete(user)
     await db.commit()
 
-    logger.info(f"사용자 삭제 완료 - ID: {user_id}, 관리자: {admin_id}")
+    logger.info(f"사용자 삭제 완료 - ID: {user_id}, 관리자: {admin_user.id}")
 
     return {"success": True, "message": "사용자가 삭제되었습니다."}
 
@@ -157,8 +136,8 @@ async def delete_user(
 @router.put("/users/{user_id}/admin")
 async def toggle_admin(
     user_id: str,
-    admin_id: str,
     is_admin: bool,
+    admin_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -166,11 +145,9 @@ async def toggle_admin(
 
     Args:
         user_id: 대상 사용자 ID
-        admin_id: 관리자 ID
         is_admin: 관리자 권한 여부
     """
-    # 관리자 권한 확인
-    await verify_admin(admin_id, db)
+    # JWT 토큰으로 관리자 권한 이미 확인됨
 
     # 대상 사용자 조회
     result = await db.execute(select(User).filter(User.id == user_id))
@@ -185,7 +162,7 @@ async def toggle_admin(
     await db.refresh(user)
 
     action = "부여" if is_admin else "해제"
-    logger.info(f"관리자 권한 {action} - 사용자: {user_id}, 관리자: {admin_id}")
+    logger.info(f"관리자 권한 {action} - 사용자: {user_id}, 관리자: {admin_user.id}")
 
     return {
         "success": True,

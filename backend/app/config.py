@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     # 개발 모드
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "false").lower() == "true"
 
+    # JWT 설정
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_HOURS: int = 24
+
     class Config:
         env_file = ".env"
         case_sensitive = True
@@ -50,3 +55,6 @@ settings = Settings()
 # 설정 검증
 if not settings.OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY가 설정되지 않았습니다.")
+
+if not settings.JWT_SECRET_KEY:
+    raise ValueError("JWT_SECRET_KEY가 설정되지 않았습니다. .env 파일에 32자 이상의 랜덤 문자열을 설정하세요.")

@@ -16,6 +16,7 @@ class User(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String, unique=True, index=True, nullable=True)
     name = Column(String)
+    password_hash = Column(String, nullable=True)  # 기존 사용자를 위해 nullable
     is_admin = Column(Boolean, default=False)  # 관리자 권한
     preferences = Column(JSON, default={})  # 선호도 설정
     created_at = Column(DateTime, default=datetime.utcnow)
