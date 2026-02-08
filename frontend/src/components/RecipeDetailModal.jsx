@@ -1,11 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import { X, Clock, Flame, ChefHat } from 'lucide-react';
 import { getDifficultyColor, getDifficultyText } from '../utils/constants';
 
 /**
  * 레시피 상세 정보 모달
+ * React.memo 적용: recipe/onClose가 변경되지 않으면 리렌더링 방지
  */
-export default function RecipeDetailModal({ recipe, onClose }) {
+const RecipeDetailModal = memo(function RecipeDetailModal({ recipe, onClose }) {
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
 
@@ -211,4 +212,6 @@ export default function RecipeDetailModal({ recipe, onClose }) {
       </div>
     </div>
   );
-}
+});
+
+export default RecipeDetailModal;

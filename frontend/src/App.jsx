@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { ChefHat, User as UserIcon, ChevronDown, ChevronUp, Shield, CookingPot } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -40,7 +40,7 @@ function Home() {
   const newImageInputRef = useRef(null);
   const userId = user?.id || DEFAULT_USER_ID;
 
-  const handleAnalysisComplete = (result, file = null) => {
+  const handleAnalysisComplete = useCallback((result, file = null) => {
     console.log('Analysis result:', result);
     setIngredients(result.ingredients || []);
     setRecipes([]);
@@ -64,9 +64,9 @@ function Home() {
       fileName: result.fileName,
       fileSize: result.fileSize,
     });
-  };
+  }, []);
 
-  const handleGenerateRecipes = async () => {
+  const handleGenerateRecipes = useCallback(async () => {
     const loadingKey = 'generate-recipes';
     setLoading(true);
     startLoading(loadingKey);
@@ -86,9 +86,9 @@ function Home() {
       setLoading(false);
       stopLoading(loadingKey);
     }
-  };
+  }, [ingredients, startLoading, stopLoading, toast]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setIngredients([]);
     setRecipes([]);
     setShowFeatures(true);
@@ -100,14 +100,14 @@ function Home() {
     if (imageUploadRef.current) {
       imageUploadRef.current.reset();
     }
-  };
+  }, []);
 
-  // 재료 목록 변경 핸들러
-  const handleIngredientsChange = (updatedIngredients) => {
+  // 재료 목록 변경 핸들러 (useCallback: IngredientList에 전달되는 참조 안정성)
+  const handleIngredientsChange = useCallback((updatedIngredients) => {
     setIngredients(updatedIngredients);
     // 재료 변경 시 레시피 초기화
     setRecipes([]);
-  };
+  }, []);
 
   const handleNewImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -123,7 +123,12 @@ function Home() {
       // 분석 완료 핸들러 호출 (파일 객체도 함께 전달)
       handleAnalysisComplete(result, file);
 
-      toast.success('이미지 분석이 완료되었습니다!');
+      const ingredientCount = result.ingredients?.length || 0;
+      toast.success(
+        ingredientCount > 0
+          ? `분석 완료! ${ingredientCount}개의 재료를 찾았습니다 🎉`
+          : '이미지 분석이 완료되었습니다!'
+      );
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error(error.userMessage || error.message || '이미지 분석 중 오류가 발생했습니다.');
@@ -135,8 +140,8 @@ function Home() {
     e.target.value = '';
   };
 
-  // 이미지 재분석
-  const handleReanalyze = async (customPrompt) => {
+  // 이미지 재분석 (useCallback: ReanalysisModal에 전달되는 참조 안정성)
+  const handleReanalyze = useCallback(async (customPrompt) => {
     if (!uploadedFile) {
       toast.error('재분석할 이미지가 없습니다.');
       return;
@@ -152,14 +157,19 @@ function Home() {
       // 분석 완료 핸들러 호출
       handleAnalysisComplete(result, uploadedFile);
 
-      toast.success('이미지 재분석이 완료되었습니다!');
+      const ingredientCount = result.ingredients?.length || 0;
+      toast.success(
+        ingredientCount > 0
+          ? `재분석 완료! ${ingredientCount}개의 재료를 찾았습니다 🎉`
+          : '이미지 재분석이 완료되었습니다!'
+      );
     } catch (error) {
       console.error('Reanalysis error:', error);
       toast.error(error.userMessage || error.message || '이미지 재분석 중 오류가 발생했습니다.');
     } finally {
       stopLoading(loadingKey);
     }
-  };
+  }, [uploadedFile, startLoading, stopLoading, toast, handleAnalysisComplete]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
@@ -169,6 +179,14 @@ function Home() {
           fullScreen
           size="lg"
           message="AI가 이미지를 분석하고 있습니다..."
+          showTips={true}
+          tips={[
+            '재료가 잘 보이도록 냉장고 문을 완전히 열고 사진을 찍으면 더 정확해요!',
+            '조명이 밝은 곳에서 촬영하면 AI가 재료를 더 잘 인식합니다.',
+            '분석이 완료되면 재료를 직접 추가하거나 수정할 수 있어요.',
+            '재료의 신선도를 설정하면 빨리 써야 할 재료 우선 레시피를 추천받을 수 있습니다.',
+            '여러 각도의 사진을 업로드하면 더 많은 재료를 찾을 수 있어요.',
+          ]}
         />
       )}
 
@@ -340,6 +358,9 @@ function Home() {
         {/* Features - 처음에만 표시 */}
         {showFeatures && (
           <section className="mt-16" aria-label="서비스 기능 소개">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+              FridgeChef가 특별한 이유
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <article className="bg-white rounded-xl p-6 shadow-md">
                 <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">

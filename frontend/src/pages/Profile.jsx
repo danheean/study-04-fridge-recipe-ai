@@ -369,12 +369,24 @@ function Profile() {
                 aria-labelledby="recipes-tab"
               >
                 {savedRecipes.length === 0 ? (
-                  <div className="text-center py-12" role="status">
-                    <BookMarked className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
-                    <p className="text-gray-500 text-lg">저장된 레시피가 없습니다</p>
-                    <p className="text-gray-400 text-sm mt-2">
-                      레시피를 저장하면 여기에 표시됩니다
+                  <div className="text-center py-16" role="status">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <BookMarked className="w-12 h-12 text-gray-400" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      아직 저장된 레시피가 없어요
+                    </h3>
+                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                      마음에 드는 레시피를 찾으면 '레시피 저장하기' 버튼을 눌러보세요.
+                      저장한 레시피는 여기서 언제든 다시 확인할 수 있습니다.
                     </p>
+                    <button
+                      onClick={() => navigate('/')}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-95"
+                    >
+                      <ChefHat className="w-5 h-5" aria-hidden="true" />
+                      레시피 찾으러 가기
+                    </button>
                   </div>
                 ) : (
                   <>

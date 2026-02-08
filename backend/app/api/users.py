@@ -9,6 +9,7 @@ from typing import List
 from app.db.database import get_db
 from app.models.user import User
 from app.models.recipe import SavedRecipe
+from app.models.image_upload import ImageUpload
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPreferences
 from app.schemas.recipe import RecipeCreate, SavedRecipeResponse
 from app.utils.logger import get_logger
@@ -282,7 +283,6 @@ async def get_user_stats(user_id: str, db: AsyncSession = Depends(get_db)):
     saved_recipes_count = result.scalar()
 
     # 업로드한 이미지 수
-    from app.models.image_upload import ImageUpload
     result = await db.execute(
         select(func.count()).select_from(ImageUpload).filter(ImageUpload.user_id == user_id)
     )

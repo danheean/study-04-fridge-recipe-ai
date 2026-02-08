@@ -20,9 +20,9 @@ class User(Base):
     preferences = Column(JSON, default={})  # 선호도 설정
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # 관계
-    image_uploads = relationship("ImageUpload", back_populates="user")
-    saved_recipes = relationship("SavedRecipe", back_populates="user")
+    # 관계 (noload: 관계 데이터는 명시적으로 로드할 때만 가져옴 - 불필요한 JOIN 방지)
+    image_uploads = relationship("ImageUpload", back_populates="user", lazy="noload")
+    saved_recipes = relationship("SavedRecipe", back_populates="user", lazy="noload")
 
     def __repr__(self):
         return f"<User {self.email or self.id}>"

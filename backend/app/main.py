@@ -4,6 +4,7 @@ FastAPI 애플리케이션 진입점
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
@@ -36,6 +37,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# GZip 압축: 1KB 이상 응답 자동 압축 (API 응답 크기 50-70% 감소)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS 설정
 app.add_middleware(

@@ -6,9 +6,11 @@ from sqlalchemy.orm import declarative_base
 from app.config import settings
 
 # 비동기 엔진 생성
+# echo=False: 프로덕션 성능 향상 (SQL 로깅 비활성화)
+# 디버깅 필요시 echo=True로 변경
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True,  # SQL 쿼리 로깅
+    echo=False,
     future=True
 )
 

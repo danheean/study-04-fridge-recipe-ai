@@ -30,7 +30,8 @@ export default function ReanalysisModal({ isOpen, onClose, onReanalyze }) {
       id: 'accuracy',
       icon: <Search className="w-6 h-6" />,
       title: '정확도 높이기',
-      description: '더 세밀하게 분석하여 재료를 정확히 식별합니다',
+      description: '더 세밀하게 분석하여 재료 이름과 수량을 정확히 식별합니다',
+      example: '예: "당근" → "당근 2개", "우유" → "우유 1L"',
       prompt: '이전 분석보다 더 정확하게 재료를 식별해주세요. 재료의 이름, 수량, 신선도를 더 자세히 분석해주세요.',
       color: 'primary',
     },
@@ -38,15 +39,17 @@ export default function ReanalysisModal({ isOpen, onClose, onReanalyze }) {
       id: 'find-hidden',
       icon: <Eye className="w-6 h-6" />,
       title: '놓친 재료 찾기',
-      description: '작은 재료나 뒤에 있는 재료도 꼼꼼히 찾습니다',
+      description: '작은 재료, 가려진 재료, 용기 속 재료까지 꼼꼼히 찾습니다',
+      example: '예: 뒤편의 소스류, 서랍 안의 채소, 병 속의 양념',
       prompt: '작은 재료, 뒤에 가려진 재료, 용기 안에 있는 재료까지 모두 찾아주세요. 놓친 재료가 없도록 꼼꼼하게 분석해주세요.',
       color: 'green',
     },
     {
       id: 'reanalyze',
       icon: <RefreshCw className="w-6 h-6" />,
-      title: '다시 분석',
-      description: '같은 조건으로 다시 분석합니다',
+      title: '처음부터 다시 분석',
+      description: '같은 조건으로 완전히 새롭게 분석을 시작합니다',
+      example: '예: AI 분석 결과가 이상할 때 사용',
       prompt: null, // 원본 프롬프트 사용
       color: 'blue',
     },
@@ -55,6 +58,7 @@ export default function ReanalysisModal({ isOpen, onClose, onReanalyze }) {
       icon: <Edit3 className="w-6 h-6" />,
       title: '커스텀 요청',
       description: '원하는 분석 방식을 직접 입력합니다',
+      example: '예: "냉동실만 분석해주세요", "음료수만 찾아주세요"',
       prompt: 'custom', // 사용자 입력
       color: 'purple',
     },
@@ -141,34 +145,47 @@ export default function ReanalysisModal({ isOpen, onClose, onReanalyze }) {
               <div key={option.id}>
                 <button
                   onClick={() => setSelectedOption(option.id)}
-                  className={`w-full text-left border-2 rounded-xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 ${getColorClasses(
+                  className={`w-full text-left border-2 rounded-xl p-5 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 ${getColorClasses(
                     option.color,
                     selectedOption === option.id
                   )}`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`${getIconColor(option.color)}`}>{option.icon}</div>
+                    <div className={`${getIconColor(option.color)} shrink-0`}>{option.icon}</div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{option.title}</h3>
-                      <p className="text-sm text-gray-600">{option.description}</p>
+                      <h3 className="font-bold text-gray-900 mb-1.5">{option.title}</h3>
+                      <p className="text-sm text-gray-700 mb-2">{option.description}</p>
+                      {option.example && (
+                        <p className="text-xs text-gray-500 italic">{option.example}</p>
+                      )}
                     </div>
                   </div>
                 </button>
 
                 {/* 커스텀 프롬프트 입력 */}
                 {option.id === 'custom' && selectedOption === 'custom' && (
-                  <div className="mt-3 pl-14">
-                    <label htmlFor="custom-prompt" className="block text-sm font-medium text-gray-700 mb-2">
-                      분석 요청 사항을 입력하세요
+                  <div className="mt-4 pl-14 animate-fadeIn">
+                    <label htmlFor="custom-prompt" className="block text-sm font-semibold text-gray-700 mb-2">
+                      AI에게 요청할 내용을 입력하세요
                     </label>
                     <textarea
                       id="custom-prompt"
                       value={customPrompt}
                       onChange={(e) => setCustomPrompt(e.target.value)}
-                      placeholder="예: 냉동실에 있는 재료만 찾아주세요"
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                      placeholder="예: 냉동실에 있는 재료만 찾아주세요&#10;예: 채소류만 분석해주세요&#10;예: 유통기한이 가까운 재료를 우선적으로 찾아주세요"
+                      rows={4}
+                      maxLength={500}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm"
+                      autoFocus
                     />
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-500">
+                        구체적으로 작성할수록 더 정확한 결과를 얻을 수 있어요
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {customPrompt.length}/500
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

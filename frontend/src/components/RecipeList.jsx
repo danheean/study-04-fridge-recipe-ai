@@ -1,11 +1,135 @@
-import { useState } from 'react';
-import { Clock, ChefHat, Flame, BookMarked, Check } from 'lucide-react';
+import { useState, memo, useCallback } from 'react';
+import { Clock, ChefHat, Flame, BookMarked, Check, Lightbulb } from 'lucide-react';
 import { saveRecipe } from '../services/api';
 import { getDifficultyColor, getDifficultyText, DEFAULT_USER_ID } from '../utils/constants';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
 import { SkeletonGrid, SkeletonRecipeCard } from './Skeleton';
+
+/**
+ * 개별 레시피 카드 (React.memo로 불필요한 리렌더링 방지)
+ * 다른 카드의 저장 상태 변경 시 이 카드가 리렌더링되지 않음
+ */
+const RecipeCard = memo(function RecipeCard({
+  recipe,
+  index,
+  recipeKey,
+  isSaved,
+  isSaving,
+  onSave,
+}) {
+  return (
+    <li key={recipeKey}>
+      <article className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden h-full">
+        {/* Recipe Header */}
+        <header className="bg-gradient-to-r from-primary-500 to-secondary-500 p-6 text-white">
+          <h3 className="text-xl font-bold mb-2">{recipe.title}</h3>
+          <p className="text-sm opacity-90">{recipe.description}</p>
+        </header>
+
+        {/* Recipe Info */}
+        <div className="p-6">
+          {/* Metadata */}
+          <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" aria-hidden="true" />
+              <span>조리 시간: {recipe.cooking_time}분</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Flame className="w-4 h-4" aria-hidden="true" />
+              <span>칼로리: {recipe.calories}kcal</span>
+            </div>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
+                recipe.difficulty
+              )}`}
+              role="status"
+            >
+              난이도: {getDifficultyText(recipe.difficulty)}
+            </span>
+          </div>
+
+          {/* Ingredients */}
+          <section className="mb-4" aria-labelledby={`ingredients-${index}`}>
+            <h4 id={`ingredients-${index}`} className="text-sm font-semibold text-gray-900 mb-2">재료</h4>
+            <ul className="space-y-1">
+              {Array.isArray(recipe.ingredients) && recipe.ingredients.map((ingredient, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span
+                    className={
+                      ingredient.available
+                        ? 'text-gray-700'
+                        : 'text-gray-400 line-through'
+                    }
+                  >
+                    {ingredient.name}
+                    {!ingredient.available && <span className="sr-only"> (보유하지 않음)</span>}
+                  </span>
+                  <span className="text-gray-500 text-xs">
+                    {ingredient.quantity}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* Instructions */}
+          <section className="mb-4" aria-labelledby={`instructions-${index}`}>
+            <h4 id={`instructions-${index}`} className="text-sm font-semibold text-gray-900 mb-2">조리 방법</h4>
+            <ol className="space-y-2 text-sm text-gray-600">
+              {Array.isArray(recipe.instructions) && recipe.instructions.map((step, idx) => (
+                <li key={idx} className="flex gap-2">
+                  <span className="font-medium text-primary-500 shrink-0">
+                    {idx + 1}.
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          {/* Action Button */}
+          <button
+            onClick={() => onSave(recipe, index)}
+            disabled={isSaved || isSaving}
+            className={`w-full mt-4 font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] ${
+              isSaved
+                ? 'bg-emerald-500 text-white cursor-not-allowed'
+                : 'bg-primary-500 hover:bg-primary-600 text-white active:scale-[0.98]'
+            }`}
+            aria-busy={isSaving}
+            aria-label={
+              isSaved
+                ? `${recipe.title} 저장 완료`
+                : `${recipe.title} 레시피 저장하기`
+            }
+          >
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" aria-hidden="true"></div>
+                저장 중...
+              </>
+            ) : isSaved ? (
+              <>
+                <Check className="w-4 h-4" aria-hidden="true" />
+                저장 완료
+              </>
+            ) : (
+              <>
+                <BookMarked className="w-4 h-4" aria-hidden="true" />
+                이 레시피 저장하기
+              </>
+            )}
+          </button>
+        </div>
+      </article>
+    </li>
+  );
+});
 
 export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID }) {
   const toast = useToast();
@@ -36,9 +160,30 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
     }
   };
 
-  // 배열 유효성 검사
+  // 빈 상태 처리
   if (!Array.isArray(recipes) || recipes.length === 0) {
-    return null;
+    return (
+      <section className="mt-12" aria-labelledby="recipes-empty">
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ChefHat className="w-10 h-10 text-primary-500" aria-hidden="true" />
+          </div>
+          <h2 id="recipes-empty" className="text-2xl font-bold text-gray-900 mb-3">
+            레시피를 생성해보세요!
+          </h2>
+          <p className="text-gray-600 mb-2">
+            인식된 재료로 맛있는 레시피를 찾아드립니다.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            재료를 확인하고 '이 재료로 레시피 찾기' 버튼을 눌러주세요.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-sm text-primary-600">
+            <Lightbulb className="w-4 h-4" aria-hidden="true" />
+            <span>재료가 부족한가요? 직접 추가할 수 있어요!</span>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   const handleSaveRecipe = async (recipe, index) => {
@@ -95,120 +240,18 @@ export default function RecipeList({ recipes, loading, userId = DEFAULT_USER_ID 
 
       <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {recipes.map((recipe, index) => {
-          // 안정적인 key 생성: 제목과 인덱스 조합
           const recipeKey = `${recipe.title}-${index}`;
 
           return (
-          <li
-            key={recipeKey}
-          >
-            <article className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden h-full">
-              {/* Recipe Header */}
-              <header className="bg-gradient-to-r from-primary-500 to-secondary-500 p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">{recipe.title}</h3>
-                <p className="text-sm opacity-90">{recipe.description}</p>
-              </header>
-
-            {/* Recipe Info */}
-            <div className="p-6">
-              {/* Metadata */}
-              <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" aria-hidden="true" />
-                  <span>조리 시간: {recipe.cooking_time}분</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Flame className="w-4 h-4" aria-hidden="true" />
-                  <span>칼로리: {recipe.calories}kcal</span>
-                </div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
-                    recipe.difficulty
-                  )}`}
-                  role="status"
-                >
-                  난이도: {getDifficultyText(recipe.difficulty)}
-                </span>
-              </div>
-
-              {/* Ingredients */}
-              <section className="mb-4" aria-labelledby={`ingredients-${index}`}>
-                <h4 id={`ingredients-${index}`} className="text-sm font-semibold text-gray-900 mb-2">재료</h4>
-                <ul className="space-y-1">
-                  {Array.isArray(recipe.ingredients) && recipe.ingredients.map((ingredient, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span
-                        className={
-                          ingredient.available
-                            ? 'text-gray-700'
-                            : 'text-gray-400 line-through'
-                        }
-                      >
-                        {ingredient.name}
-                        {!ingredient.available && <span className="sr-only"> (보유하지 않음)</span>}
-                      </span>
-                      <span className="text-gray-500 text-xs">
-                        {ingredient.quantity}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-
-              {/* Instructions */}
-              <section className="mb-4" aria-labelledby={`instructions-${index}`}>
-                <h4 id={`instructions-${index}`} className="text-sm font-semibold text-gray-900 mb-2">조리 방법</h4>
-                <ol className="space-y-2 text-sm text-gray-600">
-                  {Array.isArray(recipe.instructions) && recipe.instructions.map((step, idx) => (
-                    <li key={idx} className="flex gap-2">
-                      <span className="font-medium text-primary-500 shrink-0">
-                        {idx + 1}.
-                      </span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-
-              {/* Action Button */}
-              <button
-                onClick={() => handleSaveRecipe(recipe, index)}
-                disabled={savedRecipeIds.has(`${recipe.title}-${index}`) || savingIds.has(`${recipe.title}-${index}`)}
-                className={`w-full mt-4 font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[48px] ${
-                  savedRecipeIds.has(`${recipe.title}-${index}`)
-                    ? 'bg-emerald-500 text-white cursor-not-allowed'
-                    : 'bg-primary-500 hover:bg-primary-600 text-white active:scale-[0.98]'
-                }`}
-                aria-busy={savingIds.has(`${recipe.title}-${index}`)}
-                aria-label={
-                  savedRecipeIds.has(`${recipe.title}-${index}`)
-                    ? `${recipe.title} 저장 완료`
-                    : `${recipe.title} 레시피 저장하기`
-                }
-              >
-                {savingIds.has(`${recipe.title}-${index}`) ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" aria-hidden="true"></div>
-                    저장 중...
-                  </>
-                ) : savedRecipeIds.has(`${recipe.title}-${index}`) ? (
-                  <>
-                    <Check className="w-4 h-4" aria-hidden="true" />
-                    저장 완료
-                  </>
-                ) : (
-                  <>
-                    <BookMarked className="w-4 h-4" aria-hidden="true" />
-                    이 레시피 저장하기
-                  </>
-                )}
-              </button>
-            </div>
-            </article>
-          </li>
+            <RecipeCard
+              key={recipeKey}
+              recipe={recipe}
+              index={index}
+              recipeKey={recipeKey}
+              isSaved={savedRecipeIds.has(recipeKey)}
+              isSaving={savingIds.has(recipeKey)}
+              onSave={handleSaveRecipe}
+            />
           );
         })}
       </ul>

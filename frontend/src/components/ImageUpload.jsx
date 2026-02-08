@@ -1,5 +1,5 @@
 import { useState, useRef, useImperativeHandle, forwardRef } from 'react';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, CheckCircle, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { processAndAnalyzeImage } from '../utils/imageAnalysis';
 
 const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
@@ -123,17 +123,46 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              <Upload className="w-16 h-16 mx-auto text-primary-500" aria-hidden="true" />
+            <div className="space-y-6">
+              <div className="relative">
+                <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center transition-all ${
+                  dragActive ? 'bg-primary-500 scale-110' : 'bg-primary-100'
+                }`}>
+                  <Upload className={`w-10 h-10 transition-colors ${
+                    dragActive ? 'text-white' : 'text-primary-500'
+                  }`} aria-hidden="true" />
+                </div>
+                {dragActive && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 border-4 border-primary-500 border-dashed rounded-full animate-ping opacity-75"></div>
+                  </div>
+                )}
+              </div>
               <div>
-                <p className="text-xl font-semibold text-gray-700 mb-2">
-                  냉장고 사진 업로드
+                <p className="text-xl font-bold text-gray-900 mb-2">
+                  {dragActive ? '여기에 놓으세요!' : '냉장고 사진을 업로드하세요'}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-600 mb-4">
                   클릭하거나 드래그 앤 드롭으로 이미지를 업로드하세요
                 </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  JPG, PNG 파일 (최대 20MB)
+                <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" aria-hidden="true" />
+                    <span>JPG, PNG 지원</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" aria-hidden="true" />
+                    <span>최대 20MB</span>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-600 flex items-start gap-2">
+                  <ImageIcon className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>
+                    <strong className="font-semibold text-gray-700">촬영 팁:</strong> 냉장고 문을 완전히 열고,
+                    조명이 밝은 곳에서 촬영하면 AI가 재료를 더 정확하게 인식합니다.
+                  </span>
                 </p>
               </div>
             </div>
@@ -151,8 +180,17 @@ const ImageUpload = forwardRef(({ onAnalysisComplete }, ref) => {
       </form>
 
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive">
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg" role="alert" aria-live="assertive">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <p className="text-red-900 font-semibold text-sm mb-1">이미지 분석 실패</p>
+              <p className="text-red-700 text-sm">{error}</p>
+              <p className="text-red-600 text-xs mt-2">
+                다른 이미지를 시도하거나, 이미지 크기가 20MB를 초과하는지 확인해주세요.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

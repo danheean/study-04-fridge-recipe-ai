@@ -1,122 +1,376 @@
-# Study-04
+# FridgeChef - AI 냉장고 레시피 추천 서비스
 
-VibeCoding 홍공 스터디 프로젝트 - OpenRouter API를 사용한 LLM 실습
+냉장고 사진을 업로드하면 AI가 재료를 인식하고 맞춤 레시피를 추천해주는 웹 애플리케이션입니다.
 
-## 환경 설정
+## 주요 기능
 
-### 1. 가상환경 생성
+- 🤖 **AI 재료 인식**: Ollama(gemma3:12b)를 사용한 로컬 이미지 분석
+- 🍳 **맞춤 레시피 추천**: OpenRouter API를 통한 레시피 생성
+- ✏️ **재료 관리**: 재료 추가/수정/삭제 (이름, 수량, 신선도)
+- 🔄 **재분석 기능**: 정확도 높이기, 놓친 재료 찾기, 커스텀 요청
+- 👨‍💼 **관리자 기능**: 사용자 관리 및 시스템 통계
+- 📧 **이메일 로그인**: 이메일 기반 사용자 인증
+
+## 사전 준비사항
+
+### 1. 필수 소프트웨어 설치
+
+#### Python 3.11+ 설치
+```bash
+# macOS (Homebrew)
+brew install python@3.11
+
+# Ubuntu/Debian
+sudo apt update
+sudo apt install python3.11 python3.11-venv
+
+# Windows
+# https://www.python.org/downloads/ 에서 다운로드
+```
+
+#### Node.js 18+ 설치
+```bash
+# macOS (Homebrew)
+brew install node
+
+# Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Windows
+# https://nodejs.org/ 에서 LTS 버전 다운로드
+```
+
+#### Ollama 설치 (로컬 LLM)
+```bash
+# macOS
+brew install ollama
+
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Windows
+# https://ollama.com/download 에서 다운로드
+```
+
+#### uv 설치 (Python 패키지 관리자, 선택사항)
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 또는 pip 사용
+pip install uv
+```
+
+### 2. Ollama 모델 다운로드
 
 ```bash
+# Ollama 서비스 시작
+ollama serve  # 백그라운드에서 실행됨
+
+# gemma3:12b 모델 다운로드 (이미지 분석용, 약 7.3GB)
+ollama pull gemma3:12b
+```
+
+**중요**: gemma3:12b 모델 다운로드는 시간이 걸릴 수 있습니다 (인터넷 속도에 따라 5-30분).
+
+### 3. OpenRouter API 키 발급
+
+1. [OpenRouter](https://openrouter.ai/) 회원가입
+2. [API Keys](https://openrouter.ai/keys) 페이지에서 API 키 생성
+3. 무료 tier: 50 requests/day (레시피 생성용)
+
+## 설치 및 실행
+
+### 1. 저장소 클론
+
+```bash
+git clone https://github.com/danheean/study-04-fridge-recipe-ai.git
+cd study-04-fridge-recipe-ai
+```
+
+### 2. 백엔드 설정
+
+#### 가상환경 생성 및 활성화
+
+```bash
+cd backend
+
+# uv 사용 (권장)
 uv venv
+source .venv/bin/activate  # macOS/Linux
+# .venv\Scripts\activate   # Windows
+
+# 또는 venv 사용
+python -m venv .venv
 source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 ```
 
-### 2. 의존성 설치
+#### 의존성 설치
 
 ```bash
+# uv 사용
 uv pip install -r requirements.txt
+
+# 또는 pip 사용
+pip install -r requirements.txt
 ```
 
-### 3. 환경변수 설정
+#### 환경변수 설정
 
-`.env.example` 파일을 복사하여 `.env` 파일을 생성하세요:
 ```bash
+# 프로젝트 루트로 이동
+cd ..
+
+# .env.example 복사
 cp .env.example .env
+
+# .env 파일 편집
+nano .env  # 또는 원하는 에디터 사용
 ```
 
-`.env` 파일에 실제 API 키를 입력하세요:
+`.env` 파일 내용:
+```bash
+# OpenRouter API 키 (필수)
+OPENROUTER_API_KEY=sk-or-v1-your-actual-api-key-here
+
+# 개발 모드 (목 데이터 사용하지 않음)
+MOCK_MODE=false
+
+# 텍스트 생성 LLM 모델 (레시피 생성용)
+TEXT_MODEL=upstage/solar-pro-3:free
+
+# 이미지 분석은 Ollama 사용 (환경변수 불필요)
 ```
-OPENROUTER_API_KEY=your_actual_api_key_here
+
+### 3. 데이터베이스 초기화
+
+```bash
+cd backend
+
+# 관리자 계정 생성
+python create_admin_user.py
 ```
+
+**기본 관리자 계정**:
+- 이메일: `admin@fridgechef.com`
+- 비밀번호: `admin123`
+
+⚠️ **프로덕션 환경에서는 반드시 비밀번호를 변경하세요!**
+
+### 4. 백엔드 서버 실행
+
+```bash
+# backend 디렉토리에서
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+서버가 http://localhost:8000 에서 실행됩니다.
+
+### 5. 프론트엔드 설정 및 실행
+
+**새 터미널**을 열고:
+
+```bash
+cd frontend
+
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
+npm run dev
+```
+
+프론트엔드가 http://localhost:5173 에서 실행됩니다.
 
 ## 사용 방법
 
-### 기본 예제 실행
+### 1. 웹 브라우저 접속
 
-```bash
-python example.py
-```
+http://localhost:5173 으로 접속
 
-### API 테스트 실행
+### 2. 이미지 업로드
 
-```bash
-# 텍스트 + 이미지 인식 통합 테스트
-python test_api.py
+1. "냉장고 사진 업로드" 영역 클릭 또는 드래그 앤 드롭
+2. 냉장고 사진 선택 (JPG, PNG, 최대 20MB)
+3. AI가 자동으로 재료 분석 (약 10-30초)
 
-# 이미지 인식만 테스트 (재시도 로직 포함)
-python test_image_only.py
+### 3. 재료 확인 및 수정
 
-# 여러 모델 자동 시도
-python test_image_alternative.py
-```
+- **재료 추가**: "재료 추가" 버튼 클릭
+- **재료 수정**: 재료 카드에 마우스 호버 → 연필 아이콘 클릭
+- **재료 삭제**: 재료 카드에 마우스 호버 → 휴지통 아이콘 클릭
 
-### 코드에서 사용하기
+### 4. 재료 재분석 (선택사항)
 
-```python
-from config import OPENROUTER_API_KEY, TEXT_MODEL, IMAGE_MODEL
-import requests
+"다시 분석하기" 버튼 클릭 후 옵션 선택:
+- 🔍 **정확도 높이기**: 더 세밀한 분석
+- 🍎 **놓친 재료 찾기**: 작은 재료까지 꼼꼼히 찾기
+- 🔄 **다시 분석**: 같은 조건으로 재분석
+- ✏️ **커스텀 요청**: 원하는 분석 방식 직접 입력
 
-# API 호출 예제는 example.py 참조
-```
+### 5. 레시피 생성
 
-## 사용 가능한 모델
+"이 재료로 레시피 찾기 🍳" 버튼 클릭
 
-### 텍스트 생성 모델
-- `upstage/solar-pro-3:free` (기본값)
-- `z-ai/glm-4.5-air:free`
+### 6. 레시피 저장
 
-### 멀티모달 모델 (이미지 분석)
-- `google/gemma-3-12b-it:free` (권장 - 안정적)
-- `google/gemma-3-27b-it:free` (대안 - 일시적 rate limit 가능)
+마음에 드는 레시피의 "저장" 버튼 클릭 (로그인 필요)
 
-## OpenRouter Rate Limit 정책
+## 관리자 기능
 
-### 🆓 무료 티어 (Free Tier)
+### 관리자 로그인
 
-#### 기본 제한 (크레딧 구매 없음)
-- **분당 요청 수**: 20 requests/minute
-- **일일 요청 수**: 50 requests/day
-- **적용 모델**: `:free`로 끝나는 모든 모델
+1. 우측 상단 "로그인" 클릭
+2. 이메일: `admin@fridgechef.com`
+3. 비밀번호: `admin123`
 
-#### 향상된 제한 (최소 $10 크레딧 구매 시)
-- **분당 요청 수**: 20 requests/minute
-- **일일 요청 수**: 1,000 requests/day (20배 증가)
+### 관리자 대시보드
 
-### ⚠️ 추가 제한 사항
-
-1. **Provider Rate Limit**: 무료 모델은 제공자(Google, Meta 등)의 upstream rate limit에도 영향을 받음
-2. **전역 관리**: 여러 계정/API 키를 만들어도 rate limit은 전역적으로 관리됨
-3. **실패한 요청**: 에러가 발생해도 일일 할당량에 포함됨
-4. **잔액 제한**: 계정 잔액이 마이너스(-)면 무료 모델도 사용 불가
-
-### 📊 사용량 확인
-
-```bash
-curl https://openrouter.ai/api/v1/key \
-  -H "Authorization: Bearer $OPENROUTER_API_KEY"
-```
-
-### 💡 Rate Limit 대처 방법
-
-1. **다른 무료 모델 시도**: 각 모델마다 개별 제한이 있어 로드 분산 가능
-2. **크레딧 구매**: $10 구매 시 일일 50회 → 1,000회로 증가
-3. **시간 대기**: 일일 할당량은 자정(UTC)에 리셋
+- 우측 상단 "🛡️ 관리자" 버튼 클릭
+- 사용자 목록 조회
+- 사용자 삭제
+- 관리자 권한 부여/해제
+- 시스템 통계 확인
 
 ## 프로젝트 구조
 
 ```
-.
-├── .env                        # 환경변수 (git에 커밋 X)
-├── .env.example                # 환경변수 템플릿
-├── requirements.txt            # Python 의존성
-├── config.py                   # 환경변수 로드 및 설정
-├── example.py                  # OpenRouter API 사용 예제
-├── test_api.py                 # 텍스트/이미지 인식 통합 테스트
-├── test_image_only.py          # 이미지 인식 전용 테스트 (재시도 로직)
-└── test_image_alternative.py   # 여러 모델 자동 시도 테스트
+study-04-fridge-recipe-ai/
+├── backend/                    # FastAPI 백엔드
+│   ├── app/
+│   │   ├── api/               # API 엔드포인트
+│   │   │   ├── admin.py       # 관리자 API
+│   │   │   ├── images.py      # 이미지 분석 API
+│   │   │   ├── recipes.py     # 레시피 생성 API
+│   │   │   └── users.py       # 사용자 API
+│   │   ├── models/            # 데이터베이스 모델
+│   │   ├── schemas/           # Pydantic 스키마
+│   │   ├── services/          # 비즈니스 로직
+│   │   │   ├── ollama_service.py      # Ollama 이미지 분석
+│   │   │   └── openrouter_service.py  # OpenRouter 레시피 생성
+│   │   ├── utils/             # 유틸리티
+│   │   ├── config.py          # 설정
+│   │   └── main.py            # FastAPI 앱
+│   ├── create_admin_user.py   # 관리자 계정 생성 스크립트
+│   ├── requirements.txt       # Python 의존성
+│   └── fridgechef.db         # SQLite 데이터베이스
+│
+├── frontend/                   # React 프론트엔드
+│   ├── src/
+│   │   ├── components/        # React 컴포넌트
+│   │   │   ├── ImageUpload.jsx
+│   │   │   ├── IngredientList.jsx
+│   │   │   ├── RecipeList.jsx
+│   │   │   ├── ReanalysisModal.jsx
+│   │   │   └── ...
+│   │   ├── contexts/          # Context API
+│   │   │   ├── AuthContext.jsx
+│   │   │   ├── LoadingContext.jsx
+│   │   │   └── ToastContext.jsx
+│   │   ├── pages/             # 페이지 컴포넌트
+│   │   │   ├── AdminPage.jsx
+│   │   │   └── Profile.jsx
+│   │   ├── services/          # API 클라이언트
+│   │   │   └── api.js
+│   │   ├── utils/             # 유틸리티
+│   │   │   └── imageAnalysis.js
+│   │   └── App.jsx            # 메인 앱
+│   ├── package.json           # Node.js 의존성
+│   └── vite.config.js         # Vite 설정
+│
+├── docs/                       # 문서
+│   └── sample/                # 샘플 이미지
+├── .env                       # 환경변수 (git 제외)
+├── .env.example               # 환경변수 템플릿
+└── README.md                  # 이 파일
 ```
+
+## 기술 스택
+
+### 백엔드
+- **FastAPI**: Python 웹 프레임워크
+- **SQLAlchemy**: ORM (비동기)
+- **SQLite**: 데이터베이스
+- **Ollama**: 로컬 LLM (gemma3:12b)
+- **OpenRouter**: 클라우드 LLM API (solar-pro-3)
+- **Pillow**: 이미지 처리
+
+### 프론트엔드
+- **React 18**: UI 프레임워크
+- **Vite**: 빌드 도구
+- **TailwindCSS**: 스타일링
+- **Axios**: HTTP 클라이언트
+- **lucide-react**: 아이콘
+- **React Router**: 라우팅
+
+## 문제 해결
+
+### Ollama 연결 실패
+
+```bash
+# Ollama 서비스 상태 확인
+ollama list
+
+# Ollama 재시작
+killall ollama
+ollama serve
+```
+
+### 백엔드 포트 충돌 (8000)
+
+```bash
+# 다른 포트로 실행
+uvicorn app.main:app --reload --port 8001
+```
+
+프론트엔드에서 `.env` 파일 수정:
+```bash
+VITE_API_URL=http://localhost:8001
+```
+
+### 프론트엔드 포트 충돌 (5173)
+
+```bash
+# vite.config.js 수정
+export default defineConfig({
+  server: {
+    port: 3000  // 원하는 포트
+  }
+})
+```
+
+### 이미지 분석 너무 느림
+
+gemma3:12b는 약 10-30초 소요됩니다. 더 빠른 모델(qwen3-vl:4b)은 정확도가 낮습니다.
+
+### OpenRouter API 할당량 초과
+
+무료 tier: 50 requests/day
+- 다음날까지 대기 (UTC 자정 리셋)
+- 또는 $10 크레딧 구매 시 1,000 requests/day
 
 ## 보안 주의사항
 
-⚠️ `.env` 파일은 절대 git에 커밋하지 마세요. 이 파일에는 민감한 API 키가 포함되어 있습니다.
+⚠️ **절대 커밋하면 안 되는 파일**:
+- `.env` (API 키 포함)
+- `fridgechef.db` (사용자 데이터)
+- `.venv/` (가상환경)
+
+⚠️ **프로덕션 배포 시**:
+- 관리자 비밀번호 변경
+- CORS 설정 수정 (`backend/app/config.py`)
+- HTTPS 사용
+- 환경변수 암호화
+
+## 라이선스
+
+이 프로젝트는 교육 목적으로 제작되었습니다.
+
+## 문의
+
+문제가 발생하면 [GitHub Issues](https://github.com/danheean/study-04-fridge-recipe-ai/issues)에 등록해주세요.

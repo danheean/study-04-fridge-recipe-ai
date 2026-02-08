@@ -1,26 +1,30 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { CheckCircle2, AlertCircle, Leaf, Trash2, Plus, X, Edit2 } from 'lucide-react';
+import { InlineTip } from './Tooltip';
 
-export default function IngredientList({ ingredients, onGenerateRecipes, onIngredientsChange }) {
+/**
+ * 재료 목록 컴포넌트
+ * React.memo 적용: ingredients 배열이나 콜백이 변경되지 않으면 리렌더링 방지
+ */
+const IngredientList = memo(function IngredientList({ ingredients, onGenerateRecipes, onIngredientsChange }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [newIngredient, setNewIngredient] = useState({ name: '', quantity: '', freshness: 'moderate' });
   const [editIngredient, setEditIngredient] = useState({ name: '', quantity: '', freshness: 'moderate' });
 
-  if (!Array.isArray(ingredients) || ingredients.length === 0) {
-    return null;
-  }
+  // 빈 상태는 더 이상 null을 반환하지 않음 (항상 렌더링)
+  const isEmpty = !Array.isArray(ingredients) || ingredients.length === 0;
 
-  // 재료 삭제
-  const handleDelete = (ingredientId) => {
+  // 재료 삭제 (useCallback: 참조 안정성)
+  const handleDelete = useCallback((ingredientId) => {
     if (onIngredientsChange) {
       const updated = ingredients.filter(ing => ing.id !== ingredientId);
       onIngredientsChange(updated);
     }
-  };
+  }, [ingredients, onIngredientsChange]);
 
   // 재료 추가
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (!newIngredient.name.trim()) return;
 
     if (onIngredientsChange) {
@@ -38,7 +42,7 @@ export default function IngredientList({ ingredients, onGenerateRecipes, onIngre
     // 폼 초기화
     setNewIngredient({ name: '', quantity: '', freshness: 'moderate' });
     setShowAddForm(false);
-  };
+  }, [newIngredient, ingredients, onIngredientsChange]);
 
   // 재료 수정 시작
   const handleEditStart = (ingredient) => {
@@ -131,6 +135,21 @@ export default function IngredientList({ ingredients, onGenerateRecipes, onIngre
             {ingredients.length}개 발견
           </span>
         </div>
+
+        {/* 첫 사용자를 위한 팁 */}
+        {ingredients.length > 0 && ingredients.length <= 3 && (
+          <InlineTip variant="tip">
+            <strong>팁:</strong> 재료 카드 위에 마우스를 올리면 수정/삭제 버튼이 나타납니다.
+            AI가 잘못 인식한 재료는 수정하거나 삭제할 수 있고, 추가 버튼으로 빠진 재료를 직접 입력할 수 있어요!
+          </InlineTip>
+        )}
+
+        {ingredients.length === 0 && (
+          <InlineTip variant="info">
+            이미지 분석이 완료되면 여기에 인식된 재료가 표시됩니다.
+            재료를 확인하고 수정한 후 '레시피 찾기' 버튼을 눌러주세요.
+          </InlineTip>
+        )}
 
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {ingredients.map((ingredient) => (
@@ -234,22 +253,22 @@ export default function IngredientList({ ingredients, onGenerateRecipes, onIngre
                       )}
                     </div>
                   </div>
-                  <div className="ml-2 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                  <div className="ml-2 flex gap-1 opacity-60 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditStart(ingredient)}
-                      className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95"
+                      className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95 min-w-[40px] min-h-[40px]"
                       aria-label={`${ingredient.name} 수정`}
                       title="재료 수정"
                     >
-                      <Edit2 className="w-4 h-4" aria-hidden="true" />
+                      <Edit2 className="w-5 h-5" aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => handleDelete(ingredient.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 active:scale-95"
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-500 active:scale-95 min-w-[40px] min-h-[40px]"
                       aria-label={`${ingredient.name} 삭제`}
                       title="재료 삭제"
                     >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      <Trash2 className="w-5 h-5" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -339,11 +358,18 @@ export default function IngredientList({ ingredients, onGenerateRecipes, onIngre
 
         <button
           onClick={onGenerateRecipes}
-          className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-4 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-[0.98] min-h-[56px]"
+          disabled={isEmpty}
+          className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold text-lg py-5 px-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100 min-h-[60px] group"
+          aria-label="재료로 레시피 찾기"
         >
-          이 재료로 레시피 찾기 🍳
+          <span className="flex items-center justify-center gap-3">
+            <span>이 재료로 레시피 찾기</span>
+            <span className="text-2xl group-hover:animate-bounce">🍳</span>
+          </span>
         </button>
       </div>
     </section>
   );
-}
+});
+
+export default IngredientList;

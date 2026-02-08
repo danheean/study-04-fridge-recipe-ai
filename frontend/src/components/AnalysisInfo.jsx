@@ -1,16 +1,18 @@
+import { memo } from 'react';
 import { Clock, Cpu, FileText, HardDrive } from 'lucide-react';
+
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 /**
  * AI 분석 메타데이터 표시 컴포넌트
+ * React.memo 적용: props(metadata)가 변경되지 않으면 리렌더링 방지
  */
-export default function AnalysisInfo({ metadata }) {
+const AnalysisInfo = memo(function AnalysisInfo({ metadata }) {
   if (!metadata) return null;
-
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
   return (
     <section className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 shadow-md border border-blue-100" aria-labelledby="analysis-info-heading">
@@ -81,4 +83,6 @@ export default function AnalysisInfo({ metadata }) {
       </footer>
     </section>
   );
-}
+});
+
+export default AnalysisInfo;

@@ -20,8 +20,8 @@ class Ingredient(Base):
     freshness = Column(String)  # fresh, moderate, expiring
     confidence = Column(Float)  # 0.0 ~ 1.0
 
-    # 이미지 관계
-    image_id = Column(String, ForeignKey("image_uploads.id"))
+    # 이미지 관계 (인덱스 추가: JOIN/필터 성능 향상)
+    image_id = Column(String, ForeignKey("image_uploads.id"), index=True)
     image = relationship("ImageUpload", back_populates="ingredients")
 
     # 메타데이터
