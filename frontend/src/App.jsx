@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { ChefHat, User as UserIcon, ChevronDown, ChevronUp, Shield } from 'lucide-react';
+import { ChefHat, User as UserIcon, ChevronDown, ChevronUp, Shield, CookingPot } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -214,10 +214,11 @@ function Home() {
                 {ingredients.length > 0 && (
                   <button
                     onClick={handleReset}
-                    className="text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg px-3 py-2.5 min-h-[44px] active:bg-gray-100 active:scale-95 transition-transform"
-                    aria-label="재료 목록 초기화하고 새로 시작하기"
+                    className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-lg px-3 py-2.5 min-h-[44px] active:bg-emerald-50 active:scale-95"
+                    aria-label="새 레시피 찾기"
                   >
-                    새로 시작하기
+                    <CookingPot className="w-5 h-5" aria-hidden="true" />
+                    새 레시피
                   </button>
                 )}
               </div>
