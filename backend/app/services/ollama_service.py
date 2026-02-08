@@ -23,10 +23,10 @@ class OllamaService:
 
     def __init__(self):
         self.base_url = "http://localhost:11434"
-        self.image_model = "gemma3:12b"  # 이미지 분석용 멀티모달 모델
+        self.image_model = "qwen3-vl:8b"  # 이미지 분석용 멀티모달 모델
 
-        # httpx 클라이언트 설정
-        self.timeout = httpx.Timeout(120.0, connect=10.0)
+        # httpx 클라이언트 설정 (qwen3-vl은 느릴 수 있으므로 타임아웃 증가)
+        self.timeout = httpx.Timeout(180.0, connect=10.0)
         self.limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
 
     @retry(
@@ -141,7 +141,7 @@ class OllamaService:
             result = await self._make_chat_request(
                 model=self.image_model,
                 messages=messages,
-                timeout=120.0
+                timeout=180.0
             )
 
             content = result.get("message", {}).get("content", "{}")
